@@ -351,6 +351,9 @@ const GOOD_DAY_MAX_DANGER_MIN = 30;
 const STORAGE_KEY = "oral_ph_coach_records_v1";
 const SETTINGS_KEY = "oral_ph_coach_settings_v1";
 const FAVORITES_KEY = "oral_ph_coach_favorites_v1";
+const FEEDBACK_SEEN_KEY = "oral_ph_coach_feedback_seen_v1";
+/* この時刻以降にアクセスすると「前日のふりかえり」を表示する（深夜の記録も前日扱いにするため） */
+const DAILY_FEEDBACK_HOUR = 5;
 
 function calcPh(records, atTime) {
   let ph = BASELINE;
@@ -672,6 +675,25 @@ function isGoodDay(dayRecords, dateAtMidnight) {
   return computeDayDangerMinutes(dayRecords, dateAtMidnight) <= GOOD_DAY_MAX_DANGER_MIN;
 }
 
+/* 前日（暦日ベース）の記録をふりかえり用にまとめる。記録がなければnull */
+function computeYesterdayFeedback(nowTs, records) {
+  const yesterday = new Date(nowTs);
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  const grouped = groupRecordsByDay(records);
+  const dayRecords = grouped.get(dayKey(yesterday));
+  if (!dayRecords || dayRecords.length === 0) return null;
+  const dangerMin = computeDayDangerMinutes(dayRecords, yesterday);
+  return {
+    date: yesterday,
+    dangerMin,
+    foodCount: dayRecords.filter((r) => r.type === "food").length,
+    brushCount: dayRecords.filter((r) => r.type === "brush").length,
+    protectCount: dayRecords.filter((r) => r.type === "protect").length,
+    achieved: dangerMin <= GOOD_DAY_MAX_DANGER_MIN,
+  };
+}
+
 function computeGoodDayStreak(records, now) {
   if (records.length === 0) return 0;
   const grouped = groupRecordsByDay(records);
@@ -925,6 +947,22 @@ function saveFavorites() {
   } catch (e) {}
 }
 
+function loadFeedbackSeen() {
+  try {
+    const raw = localStorage.getItem(FEEDBACK_SEEN_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveFeedbackSeen(dayKeyStr) {
+  try {
+    localStorage.setItem(FEEDBACK_SEEN_KEY, JSON.stringify({ lastShownDay: dayKeyStr }));
+  } catch (e) {}
+}
+
 function applyTheme() {
   if (state.themePref === "auto") delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = state.themePref;
@@ -955,9 +993,23 @@ const state = {
   detailLevel: savedSettings.detailLevel || DEFAULT_DETAIL_LEVEL,
   themePref: savedSettings.themePref || "auto",
   fontSizePref: savedSettings.fontSizePref || "standard",
+  showDailyFeedback: false,
+  dailyFeedback: null,
   now: Date.now(),
 };
 applyTheme();
+
+/* 朝5時以降の初回アクセスなら、まだ見ていない前日のふりかえりを表示する */
+(function setupDailyFeedback() {
+  const nowDate = new Date(state.now);
+  if (nowDate.getHours() < DAILY_FEEDBACK_HOUR) return;
+  const todayKeyStr = dayKey(nowDate);
+  if (loadFeedbackSeen().lastShownDay === todayKeyStr) return;
+  const feedback = computeYesterdayFeedback(state.now, state.records);
+  if (!feedback) return;
+  state.showDailyFeedback = true;
+  state.dailyFeedback = feedback;
+})();
 
 let deferredInstallPrompt = null;
 
@@ -1033,9 +1085,12 @@ function renderHome() {
         </span>
       </div>
 
-      <div class="card row-between">
-        <span class="label-sm">今日、危険域(pH${DANGER_PH}未満)にいた時間</span>
-        <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+      <div class="card">
+        <div class="row-between">
+          <span class="label-sm">今日、危険域(pH${DANGER_PH}未満)にいた時間</span>
+          <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+        </div>
+        <p style="margin:8px 0 0;font-size:0.75rem;color:var(--slate-500);">目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう</p>
       </div>
 
       ${streak > 0 ? `
@@ -1342,6 +1397,39 @@ function renderInfoModal() {
   `;
 }
 
+function renderDailyFeedbackModal() {
+  if (!state.showDailyFeedback || !state.dailyFeedback) return "";
+  const f = state.dailyFeedback;
+  const dateLabel = `${f.date.getMonth() + 1}月${f.date.getDate()}日`;
+  return `
+    <div class="modal-overlay" data-action="close-daily-feedback">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>${dateLabel}のふりかえり</h2>
+          <button class="modal-close" data-action="close-daily-feedback" aria-label="閉じる">×</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card" style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.75rem;" aria-hidden="true">${f.achieved ? "🎉" : "💧"}</span>
+            <div>
+              <p style="margin:0;font-size:0.9375rem;font-weight:800;color:var(--slate-800);">
+                危険域にいた時間: ${f.dangerMin}分（目安${GOOD_DAY_MAX_DANGER_MIN}分以下）
+              </p>
+              <p style="margin:2px 0 0;font-size:0.75rem;color:var(--slate-500);">
+                ${f.achieved ? "目安の範囲内でした。この調子です！" : "目安より長めでした。間食の間隔や歯磨きのタイミングを見直してみましょう。"}
+              </p>
+            </div>
+          </div>
+          <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+            🍽️ ${f.foodCount}件の食事記録 ／ 🪥 ${f.brushCount}回の歯磨き${f.protectCount ? ` ／ 🧪 ${f.protectCount}回のケア` : ""}
+          </p>
+        </div>
+        <button class="cta-btn" style="margin-top:16px;" data-action="close-daily-feedback">今日もはじめる</button>
+      </div>
+    </div>
+  `;
+}
+
 function render() {
   const root = document.getElementById("root");
   if (state.showOnboarding) {
@@ -1381,6 +1469,7 @@ function render() {
     ${renderModal()}
     ${renderProtectModal()}
     ${renderInfoModal()}
+    ${renderDailyFeedbackModal()}
   `;
 }
 
@@ -1389,9 +1478,14 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   const action = el.dataset.action;
 
-  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal") && e.target !== el) return;
+  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal" || action === "close-daily-feedback") && e.target !== el) return;
 
   switch (action) {
+    case "close-daily-feedback":
+      state.showDailyFeedback = false;
+      saveFeedbackSeen(dayKey(new Date(state.now)));
+      render();
+      break;
     case "install-pwa":
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
