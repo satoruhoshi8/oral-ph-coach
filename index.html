@@ -1,0 +1,1622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Oral pH Coach（プロトタイプ）</title>
+<meta name="theme-color" content="#0d9488" />
+<meta name="color-scheme" content="light dark" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Oral pH Coach" />
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-dark: #0f766e;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --emerald: #059669;
+    --emerald-bg: #d1fae5;
+    --amber: #d97706;
+    --amber-bg: #fef3c7;
+    --red: #dc2626;
+    --red-bg: #fee2e2;
+    --card-bg: #ffffff;
+    --accent-soft-bg: #f0fdfa;
+    --accent-soft-bg-strong: #ecfdf5;
+    --accent-soft-border: #99f6e4;
+    --advice-text: #134e4a;
+    --chart-safe-bg: #dcfce7;
+    --chart-caution-bg: #fef3c7;
+    --chart-danger-bg: #fee2e2;
+    --chart-line: #0f172a;
+    --chart-grid: #94a3b8;
+    --chart-axis-text: #64748b;
+    --chart-safe-bar: #22c55e;
+    --chart-caution-bar: #f59e0b;
+    --chart-danger-bar: #ef4444;
+    --shadow-color: rgba(15,23,42,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --slate-50: #1e293b;
+      --slate-100: #0f172a;
+      --slate-200: #334155;
+      --slate-400: #64748b;
+      --slate-500: #94a3b8;
+      --slate-600: #cbd5e1;
+      --slate-700: #e2e8f0;
+      --slate-800: #f1f5f9;
+      --slate-900: #f8fafc;
+      --emerald-bg: rgba(5,150,105,0.22);
+      --amber-bg: rgba(217,119,6,0.22);
+      --red-bg: rgba(220,38,38,0.22);
+      --card-bg: #1e293b;
+      --accent-soft-bg: rgba(13,148,136,0.18);
+      --accent-soft-bg-strong: rgba(13,148,136,0.26);
+      --accent-soft-border: rgba(45,212,191,0.4);
+      --advice-text: #99f6e4;
+      --chart-safe-bg: rgba(34,197,94,0.18);
+      --chart-caution-bg: rgba(245,158,11,0.18);
+      --chart-danger-bg: rgba(239,68,68,0.2);
+      --chart-line: #f1f5f9;
+      --chart-grid: #475569;
+      --chart-axis-text: #94a3b8;
+      --shadow-color: rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --slate-50: #1e293b;
+    --slate-100: #0f172a;
+    --slate-200: #334155;
+    --slate-400: #64748b;
+    --slate-500: #94a3b8;
+    --slate-600: #cbd5e1;
+    --slate-700: #e2e8f0;
+    --slate-800: #f1f5f9;
+    --slate-900: #f8fafc;
+    --emerald-bg: rgba(5,150,105,0.22);
+    --amber-bg: rgba(217,119,6,0.22);
+    --red-bg: rgba(220,38,38,0.22);
+    --card-bg: #1e293b;
+    --accent-soft-bg: rgba(13,148,136,0.18);
+    --accent-soft-bg-strong: rgba(13,148,136,0.26);
+    --accent-soft-border: rgba(45,212,191,0.4);
+    --advice-text: #99f6e4;
+    --chart-safe-bg: rgba(34,197,94,0.18);
+    --chart-caution-bg: rgba(245,158,11,0.18);
+    --chart-danger-bg: rgba(239,68,68,0.2);
+    --chart-line: #f1f5f9;
+    --chart-grid: #475569;
+    --chart-axis-text: #94a3b8;
+    --shadow-color: rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  html { font-size: 100%; }
+  html[data-fontsize="large"] { font-size: 115%; }
+  html[data-fontsize="xlarge"] { font-size: 130%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    background: var(--slate-100);
+    color: var(--slate-800);
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+  button { font: inherit; cursor: pointer; }
+  .app { max-width: 420px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; background: var(--slate-100); }
+
+  .install-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--teal); color: #fff; font-size:0.75rem; padding: 10px 14px; }
+  .install-banner-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .install-banner-actions button { background: rgba(255,255,255,0.2); border: none; color: #fff; font-weight: 700; padding: 6px 10px; border-radius: 8px; font-size:0.75rem; }
+  .install-banner-actions button:last-child { background: none; padding: 4px 6px; font-size:1.0rem; }
+
+  .header { padding: 22px 20px 8px; }
+  .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .header h1 { margin: 0; font-size:1.25rem; font-weight: 800; color: var(--slate-800); }
+  .header p { margin: 2px 0 0; font-size:0.75rem; color: var(--slate-400); }
+  .settings-btn { background: none; border: none; font-size:1.25rem; padding: 4px; color: var(--slate-500); flex-shrink: 0; }
+  .main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+  .screen { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  .card { background: var(--card-bg); border-radius: 18px; padding: 18px; box-shadow: 0 1px 3px var(--shadow-color); }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+  .label-sm { font-size:0.8125rem; color: var(--slate-500); }
+
+  .badge { font-size:0.6875rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .badge-safe { background: var(--emerald-bg); color: var(--emerald); }
+  .badge-caution { background: var(--amber-bg); color: var(--amber); }
+  .badge-danger { background: var(--red-bg); color: var(--red); }
+
+  .info-btn { background: none; border: none; font-size:0.8125rem; padding: 0 0 0 2px; color: var(--slate-400); vertical-align: middle; }
+
+  .ph-row { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 14px; gap: 10px; }
+  .ph-value { font-size:2.75rem; font-weight: 800; margin: 0; font-variant-numeric: tabular-nums; line-height: 1; }
+  .text-safe { color: var(--emerald); }
+  .text-caution { color: var(--amber); }
+  .text-danger { color: var(--red); }
+
+  .mascot { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 92px; flex-shrink: 0; }
+  .mascot-caption { font-size:0.625rem; color: var(--slate-500); text-align: center; line-height: 1.3; }
+
+  .gauge-track { position: relative; height: 20px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+    background: linear-gradient(to right, #ef4444 0%, #f59e0b 38%, #22c55e 68%, #22c55e 100%); }
+  .gauge-threshold { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.75); }
+  .gauge-marker { position: absolute; top: -4px; bottom: -4px; width: 6px; border-radius: 4px; background: var(--slate-900); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .gauge-labels { display: flex; justify-content: space-between; font-size:0.6875rem; color: var(--slate-400); margin-top: 6px; padding: 0 2px; }
+
+  .explain-status { margin: 0 0 12px; font-size:0.875rem; font-weight: 700; color: var(--slate-800); line-height: 1.6; }
+  .explain-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+  .explain-row:last-child { margin-bottom: 0; }
+  .explain-row p { margin: 0; font-size:0.8125rem; color: var(--slate-600); line-height: 1.55; }
+
+  .btn-stack { display: flex; flex-direction: column; gap: 10px; }
+  .cta-btn { width: 100%; padding: 18px; border: none; border-radius: 18px; background: var(--teal); color: #fff; font-size:1.0625rem; font-weight: 800;
+    box-shadow: 0 6px 16px rgba(13,148,136,0.28); }
+  .cta-btn:active { background: var(--teal-dark); }
+  .cta-btn:disabled { opacity: 0.5; box-shadow: none; }
+  .secondary-btn { width: 100%; padding: 14px; border-radius: 16px; border: 1.5px solid var(--teal); background: var(--card-bg); color: var(--teal-dark); font-size:0.9375rem; font-weight: 700; }
+  .secondary-btn:active { background: var(--accent-soft-bg); }
+  .secondary-btn:disabled { opacity: 0.6; background: var(--slate-50); color: var(--slate-400); border-color: var(--slate-200); }
+
+  .favorites-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .favorite-chip { display: flex; align-items: center; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 999px; overflow: hidden; }
+  .favorite-chip button:first-child { background: none; border: none; padding: 8px 6px 8px 14px; font-size:0.75rem; font-weight: 700; color: var(--slate-700); }
+  .favorite-remove { background: none; border: none; padding: 6px 12px 6px 4px; font-size:0.875rem; color: var(--slate-400); }
+
+  .hint { text-align: center; font-size:0.75rem; color: var(--slate-400); margin: 0; }
+
+  .disclaimer { font-size:0.625rem; line-height: 1.6; color: var(--slate-400); text-align: center; padding: 8px 16px; background: var(--slate-50); border-top: 1px solid var(--slate-200); }
+
+  .nav { display: flex; border-bottom: 1px solid var(--slate-200); background: var(--card-bg); }
+  .nav button { flex: 1; padding: 10px 2px; background: none; border: none; font-size:0.6875rem; font-weight: 700; color: var(--slate-400); }
+  .nav button.active { color: var(--teal); box-shadow: inset 0 -2px 0 var(--teal); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+  .modal-sheet { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 24px 24px 0 0; padding: 20px 20px 32px; max-height: 85vh; overflow-y: auto; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .modal-head h2 { margin: 0; font-size:1.0625rem; font-weight: 800; color: var(--slate-800); }
+  .modal-close { background: none; border: none; font-size:1.625rem; line-height: 1; color: var(--slate-400); padding: 0 4px; }
+  .back-link { background: none; border: none; padding: 0; font-size:0.75rem; font-weight: 700; color: var(--teal-dark); }
+  .back-link:disabled { opacity: 0.5; }
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cat-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 16px 8px;
+    border-radius: 16px; border: 1px solid var(--slate-200); background: var(--slate-50); }
+  .cat-btn:active { background: var(--accent-soft-bg-strong); border-color: var(--accent-soft-border); }
+  .cat-btn.selected { background: var(--accent-soft-bg-strong); border: 1.5px solid var(--teal); }
+  .cat-check { position: absolute; top: 8px; right: 10px; color: var(--teal); font-weight: 800; font-size:0.8125rem; }
+  .cat-emoji { font-size:1.75rem; }
+  .cat-label { font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
+  .cat-desc { font-size:0.625rem; color: var(--slate-400); line-height: 1.3; }
+
+  .chart-card { background: var(--card-bg); border-radius: 18px; padding: 12px; box-shadow: 0 1px 3px var(--shadow-color); }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size:0.6875rem; color: var(--slate-500); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+  .advice-box { background: var(--accent-soft-bg); border: 1px solid var(--accent-soft-border); border-radius: 18px; padding: 16px; }
+  .advice-title { margin: 0 0 4px; font-size:0.75rem; font-weight: 800; color: var(--teal-dark); }
+  .advice-text { margin: 0; font-size:0.875rem; color: var(--advice-text); line-height: 1.6; }
+
+  .record-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .record-list li { display: flex; align-items: center; justify-content: space-between; font-size:0.875rem; color: var(--slate-700); }
+  .record-time { font-size:0.75rem; color: var(--slate-400); }
+  .record-delete { background: none; border: none; font-size:0.8125rem; padding: 2px 4px; color: var(--slate-400); }
+
+  .timeline-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--slate-100); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-time { width: 44px; flex-shrink: 0; font-size:0.75rem; font-weight: 700; color: var(--slate-500); padding-top: 6px; }
+  .timeline-icon { width: 32px; height: 32px; border-radius: 999px; background: var(--slate-50); display: flex; align-items: center; justify-content: center; font-size:1.0rem; flex-shrink: 0; }
+  .timeline-item.current .timeline-icon { background: var(--accent-soft-bg-strong); }
+  .timeline-body { flex: 1; padding-top: 4px; }
+  .timeline-title { font-size:0.875rem; font-weight: 700; color: var(--slate-800); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .timeline-item.current .timeline-title { color: var(--teal-dark); }
+  .timeline-desc { font-size:0.75rem; color: var(--slate-500); margin-top: 2px; line-height: 1.4; }
+  .now-tag { font-size:0.625rem; font-weight: 700; color: #fff; background: var(--teal); padding: 1px 8px; border-radius: 999px; }
+
+  .history-summary { font-size:0.8125rem; color: var(--slate-600); line-height: 1.7; }
+  .month-header { font-size:0.8125rem; font-weight: 800; color: var(--slate-500); margin: 4px 0 2px; padding-top: 10px; }
+  .month-header:first-child { padding-top: 0; }
+  .day-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border: none; border-bottom: 1px solid var(--slate-100); width: 100%; background: none; text-align: left; }
+  .day-row:last-child { border-bottom: none; }
+  .day-dot { width: 10px; height: 10px; border-radius: 999px; flex-shrink: 0; }
+  .day-date { width: 68px; flex-shrink: 0; font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
+  .day-counts { flex: 1; font-size:0.75rem; color: var(--slate-500); }
+  .day-expand-icon { font-size:0.625rem; color: var(--slate-400); flex-shrink: 0; }
+  .day-detail { padding: 4px 0 10px 20px; }
+
+  .level-list { display: flex; flex-direction: column; gap: 10px; }
+  .level-card { text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--slate-200); background: var(--slate-50); width: 100%; }
+  .level-card.selected { border-color: var(--teal); background: var(--accent-soft-bg); }
+  .level-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .level-card-title { font-size:0.8125rem; font-weight: 800; color: var(--slate-700); }
+  .level-check { color: var(--teal); font-weight: 800; flex-shrink: 0; }
+  .level-card-emojis { margin-top: 6px; font-size:1.0rem; letter-spacing: 2px; }
+
+  .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .option-pill { padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--slate-200); background: var(--slate-50); font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
+  .option-pill.selected { border-color: var(--teal); background: var(--accent-soft-bg); color: var(--teal-dark); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * 食品カテゴリと「ステファンカーブ」簡易モデルのパラメータ
+ * drop      : 摂取直後に下がるpHの量
+ * halfLife  : そこからベースラインへ回復していく半減期（分）
+ *             値が大きいほど、ダラダラと長く低pH状態が続く
+ * ------------------------------------------------------------------ */
+const CATEGORY_DEFS = {
+  sweet:            { label: "甘い・酸っぱいもの",     emoji: "🍬", drop: 1.6, halfLife: 20, desc: "お菓子・ジュース・果物など" },
+  sweet_strong:     { label: "甘いもの（強）",         emoji: "🍫", drop: 1.8, halfLife: 20, desc: "チョコ・キャンディ・ジュースなど" },
+  sweet_weak:       { label: "甘いもの（弱）",         emoji: "🍪", drop: 1.0, halfLife: 15, desc: "クッキー・菓子パンなど" },
+  sour:             { label: "酸っぱいもの",           emoji: "🍋", drop: 2.0, halfLife: 25, desc: "柑橘・酢・炭酸飲料など" },
+  carb:             { label: "炭水化物",               emoji: "🍚", drop: 1.2, halfLife: 15, desc: "ご飯・パン・麺など" },
+  water:            { label: "水・お茶",               emoji: "💧", drop: 0,   halfLife: 1,  desc: "糖分・酸を含まない飲み物" },
+  meal:             { label: "その他の食事",           emoji: "🍽️", drop: 0.8, halfLife: 10, desc: "バランスの良い食事など" },
+
+  rice:             { label: "ご飯・米",               emoji: "🍚", drop: 1.1, halfLife: 14, desc: "白米・おにぎりなど" },
+  bread_noodle:     { label: "パン・麺",               emoji: "🍞", drop: 1.3, halfLife: 16, desc: "食パン・麺類など" },
+  fruit:            { label: "果物",                   emoji: "🍎", drop: 1.3, halfLife: 18, desc: "りんご・バナナなど（柑橘以外）" },
+  dairy:            { label: "乳製品",                 emoji: "🥛", drop: 0.3, halfLife: 8,  desc: "牛乳・チーズ・ヨーグルトなど（歯に優しい）" },
+
+  chocolate:        { label: "チョコレート",           emoji: "🍫", drop: 1.9, halfLife: 22, desc: "口の中に残りやすい甘さ" },
+  candy:            { label: "キャンディ・グミ",       emoji: "🍬", drop: 1.9, halfLife: 26, desc: "溶けるまで長く口にとどまる" },
+  juice:            { label: "ジュース",               emoji: "🧃", drop: 1.6, halfLife: 16, desc: "果汁飲料・加糖飲料など" },
+  soda:             { label: "炭酸飲料",               emoji: "🥤", drop: 2.0, halfLife: 18, desc: "コーラ・サイダーなど" },
+  citrus:           { label: "柑橘類",                 emoji: "🍋", drop: 1.9, halfLife: 22, desc: "みかん・レモン・グレープフルーツなど" },
+  vinegar:          { label: "酢の物・ドレッシング",   emoji: "🍶", drop: 1.7, halfLife: 20, desc: "酢の物・ピクルスなど" },
+  snack:            { label: "スナック・揚げ物",       emoji: "🍟", drop: 1.1, halfLife: 16, desc: "ポテトチップス・揚げ物系おつまみなど" },
+
+  cake:             { label: "ケーキ・洋菓子",         emoji: "🍰", drop: 1.7, halfLife: 20, desc: "誕生日ケーキ・シュークリームなど" },
+  ice_cream:        { label: "アイス",                 emoji: "🍦", drop: 1.3, halfLife: 14, desc: "溶けて糖分が広がりやすい" },
+  coffee_tea_sweet: { label: "加糖コーヒー・紅茶",     emoji: "☕", drop: 1.2, halfLife: 15, desc: "砂糖やミルクを加えたもの" },
+};
+
+/* 食事記録の詳細さ（5段階）。数字が大きいほど選べるカテゴリが増える。
+   段階を変えても過去の記録はCATEGORY_DEFS側でidが共通なのでずっと正しく表示・計算できる */
+const DETAIL_LEVELS = [
+  { level: 1, name: "かんたん",     ids: ["sweet", "meal", "water"] },
+  { level: 2, name: "ふつう",       ids: ["sweet_strong", "sweet_weak", "sour", "carb", "water", "meal"] },
+  { level: 3, name: "やや詳しく",   ids: ["sweet_strong", "sweet_weak", "sour", "rice", "bread_noodle", "fruit", "dairy", "water", "meal"] },
+  { level: 4, name: "詳しく",       ids: ["chocolate", "candy", "juice", "soda", "citrus", "vinegar", "rice", "bread_noodle", "fruit", "dairy", "snack", "water", "meal"] },
+  { level: 5, name: "とても詳しく", ids: ["chocolate", "candy", "cake", "ice_cream", "juice", "soda", "citrus", "vinegar", "rice", "bread_noodle", "fruit", "dairy", "snack", "coffee_tea_sweet", "water", "meal"] },
+];
+const DEFAULT_DETAIL_LEVEL = 2;
+
+function categoriesForLevel(level) {
+  const def = DETAIL_LEVELS.find((d) => d.level === level) || DETAIL_LEVELS[DEFAULT_DETAIL_LEVEL - 1];
+  return def.ids.map((id) => ({ id, ...CATEGORY_DEFS[id] }));
+}
+
+/* 食事の記録はまず「いつの食事か」を選んでから、食品カテゴリを選ぶ */
+const MEAL_TYPES = [
+  { id: "breakfast", label: "朝食", emoji: "🌅" },
+  { id: "lunch",     label: "昼食", emoji: "☀️" },
+  { id: "dinner",    label: "夕食", emoji: "🌙" },
+  { id: "snack",     label: "間食", emoji: "🍪" },
+];
+
+function getMealType(id) {
+  return MEAL_TYPES.find((m) => m.id === id);
+}
+
+/* 歯を守る行動（脱灰を防ぐ・再石灰化を助ける）の記録 */
+const PROTECT_ACTIONS = [
+  { id: "fluoride", label: "フッ素（洗口・歯磨き粉）", emoji: "🧪", reduction: 0.35, desc: "歯の再石灰化を助け、酸への抵抗力を高めます" },
+  { id: "xylitol",  label: "キシリトールガム",         emoji: "🍬", reduction: 0.25, desc: "唾液の分泌を促し、酸を中和する助けになります" },
+  { id: "rinse",    label: "洗口液・マウスウォッシュ", emoji: "🧴", reduction: 0.3,  desc: "口腔内の酸や汚れを洗い流します" },
+];
+
+function getProtectAction(id) {
+  return PROTECT_ACTIONS.find((p) => p.id === id);
+}
+
+/* 1日の理想的な食事・歯磨きサイクル（あくまで一般的な目安） */
+const SCHEDULE = [
+  { start: 7 * 60,      icon: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう" },
+  { start: 7 * 60 + 30, icon: "🪥",  label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ" },
+  { start: 8 * 60,      icon: "💧",  label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です" },
+  { start: 12 * 60,     icon: "🍽️", label: "昼食",               desc: "" },
+  { start: 12 * 60 + 30,icon: "🪥",  label: "歯磨き・うがい",     desc: "" },
+  { start: 13 * 60,     icon: "💧",  label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて" },
+  { start: 19 * 60,     icon: "🍽️", label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想" },
+  { start: 19 * 60 + 30,icon: "🪥",  label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります" },
+  { start: 20 * 60,     icon: "🌙",  label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です" },
+];
+
+const BASELINE = 7.0;
+const PH_MIN = 4.0;
+const PH_MAX = 7.5;
+const DANGER_PH = 5.5;
+const SAFE_PH = 6.3;
+/* 歯磨き・うがいを記録すると、それより前の食品由来の酸の影響をこの割合だけ即座に減らす
+   （食べかす除去・洗口・フッ素による効果の簡易モデル） */
+const BRUSH_REDUCTION = 0.65;
+/* 歯磨き記録の連打防止：一定時間は再記録できないようにする */
+const BRUSH_COOLDOWN_MIN = 30;
+/* 1日の危険域滞在時間がこれ以下なら「良い日」とみなす目安（分） */
+const GOOD_DAY_MAX_DANGER_MIN = 30;
+const STORAGE_KEY = "oral_ph_coach_records_v1";
+const SETTINGS_KEY = "oral_ph_coach_settings_v1";
+const FAVORITES_KEY = "oral_ph_coach_favorites_v1";
+
+function calcPh(records, atTime) {
+  let ph = BASELINE;
+  const reductionEvents = records
+    .filter((r) => (r.type === "brush" || r.type === "protect") && r.time <= atTime)
+    .map((r) => {
+      if (r.type === "brush") return { time: r.time, factor: BRUSH_REDUCTION };
+      const p = getProtectAction(r.protectId);
+      return { time: r.time, factor: p ? p.reduction : 0 };
+    });
+  for (const r of records) {
+    if (r.type !== "food" || r.time > atTime) continue;
+    const cat = CATEGORY_DEFS[r.category];
+    if (!cat || cat.drop === 0) continue;
+    const elapsedMin = (atTime - r.time) / 60000;
+    const k = Math.log(2) / cat.halfLife;
+    let contribution = cat.drop * Math.exp(-k * elapsedMin);
+    for (const ev of reductionEvents) {
+      if (ev.time > r.time) contribution *= (1 - ev.factor);
+    }
+    ph -= contribution;
+  }
+  return Math.max(PH_MIN, Math.min(PH_MAX, ph));
+}
+
+function getZone(ph) {
+  if (ph >= SAFE_PH) return { key: "safe", label: "安全（中性）" };
+  if (ph >= DANGER_PH) return { key: "caution", label: "注意" };
+  return { key: "danger", label: "危険域（脱灰リスク）" };
+}
+
+function getPhExplanation(zone) {
+  switch (zone.key) {
+    case "safe":
+      return {
+        status: "唾液の働きで、お口の中は安定した中性に保たれています。歯からミネラルが溶け出す「脱灰」はほとんど起きていない状態です。",
+        worsens: "ここで甘いものや酸っぱいものを摂ると、pHは急に下がり、また危険域に向かいます。",
+        helps: "とくに何もしなくても安定していきますが、次の間食までなるべく時間を空けるほど、この良い状態を長く保てます。",
+      };
+    case "caution":
+      return {
+        status: "歯の表面がやや酸性に傾いています。歯が溶け出す「脱灰」と、唾液が修復する「再石灰化」がせめぎ合っている境界の状態です。",
+        worsens: "このタイミングでさらに甘いもの・酸っぱいものを追加すると、pHがより深く・長く危険域にとどまりやすくなります。",
+        helps: "水やお茶でお口をゆすぐと酸を薄める助けになります。このまま何も食べなければ、唾液の力で自然に回復していきます。",
+      };
+    default:
+      return {
+        status: "歯の表面のエナメル質からミネラルが溶け出す「脱灰」が優勢になっています。pHが" + DANGER_PH + "を下回ると、この反応が急速に進むといわれています。",
+        worsens: "この状態でさらに間食を重ねると、脱灰が進む時間がどんどん延びて、むし歯のリスクが高まります。",
+        helps: "歯の表面が柔らかくなっているため強くこすらず、まず水やお茶でゆすぎましょう。今「🪥歯磨きした」やフッ素などのケアを記録すると、酸の影響を大きく減らせます。",
+      };
+  }
+}
+
+function renderMascotSvg(zoneKey) {
+  if (zoneKey === "safe") {
+    return `
+      <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+        <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+        <circle cx="50" cy="45" r="4" fill="#0f172a"/>
+        <circle cx="70" cy="45" r="4" fill="#0f172a"/>
+        <path d="M48 58 Q60 68 72 58" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="40" cy="54" r="5" fill="#fca5a5" opacity="0.6"/>
+        <circle cx="80" cy="54" r="5" fill="#fca5a5" opacity="0.6"/>
+        <path d="M92 18 l3 7 7 3 -7 3 -3 7 -3-7-7-3 7-3z" fill="#fbbf24"/>
+      </svg>
+    `;
+  }
+  if (zoneKey === "caution") {
+    return `
+      <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+        <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#fef9c3" stroke="#eab308" stroke-width="2"/>
+        <circle cx="50" cy="45" r="4" fill="#0f172a"/>
+        <circle cx="70" cy="45" r="4" fill="#0f172a"/>
+        <path d="M46 63 Q53 58 60 63 T74 63" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M86 26 q5 7 0 14 q-5-2-3-9 q1-3 3-5z" fill="#38bdf8"/>
+      </svg>
+    `;
+  }
+  return `
+    <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+      <circle cx="60" cy="65" r="32" fill="#7c3aed"/>
+      <circle cx="30" cy="42" r="8" fill="#7c3aed"/>
+      <circle cx="90" cy="42" r="8" fill="#7c3aed"/>
+      <circle cx="34" cy="92" r="7" fill="#7c3aed"/>
+      <circle cx="86" cy="92" r="7" fill="#7c3aed"/>
+      <circle cx="60" cy="30" r="7" fill="#7c3aed"/>
+      <circle cx="48" cy="58" r="5" fill="#fff"/>
+      <circle cx="72" cy="58" r="5" fill="#fff"/>
+      <circle cx="48" cy="59" r="2.4" fill="#0f172a"/>
+      <circle cx="72" cy="59" r="2.4" fill="#0f172a"/>
+      <path d="M44 78 Q60 90 76 78" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M50 81 l2 6 M60 84 l0 7 M70 81 l-2 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+  `;
+}
+
+function mascotCaption(zoneKey) {
+  if (zoneKey === "safe") return "元気な状態！このまま安定をキープ";
+  if (zoneKey === "caution") return "菌がすこし元気に…注意しましょう";
+  return "虫歯菌が活発化中！今すぐケアを";
+}
+
+function formatClock(ts) {
+  return new Date(ts).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatElapsed(ms) {
+  const totalMin = Math.floor(ms / 60000);
+  if (totalMin < 1) return "たった今";
+  if (totalMin < 60) return `${totalMin}分前`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${h}時間${m > 0 ? m + "分" : ""}前`;
+}
+
+function isSameDay(a, b) {
+  const d1 = new Date(a), d2 = new Date(b);
+  return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function dayKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dayStartTs(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/* 一定間隔でpHをサンプリングして、危険域・注意域にいた合計時間（分）を概算する */
+function computeZoneMinutes(records, from, to, stepMin) {
+  let dangerMin = 0, cautionMin = 0;
+  if (to <= from || records.length === 0) return { dangerMin, cautionMin };
+  for (let t = from; t <= to; t += stepMin * 60000) {
+    const ph = calcPh(records, t);
+    if (ph < DANGER_PH) dangerMin += stepMin;
+    else if (ph < SAFE_PH) cautionMin += stepMin;
+  }
+  return { dangerMin, cautionMin };
+}
+
+function buildSeries(records, now) {
+  const oneHour = 60 * 60000;
+  const start = records.length ? Math.min(records[0].time, now - oneHour) : now - oneHour;
+  const span = Math.max(30, (now - start) / 60000);
+  const step = span > 240 ? 5 : 2;
+  const points = [];
+  for (let m = 0; m <= span; m += step) {
+    const t = start + m * 60000;
+    points.push({ t, ph: calcPh(records, t) });
+  }
+  points.push({ t: now, ph: calcPh(records, now) });
+  return { points, start, end: now };
+}
+
+function generateAdvice(records, now) {
+  if (records.length === 0) {
+    return "まだ今日の記録がありません。食事や間食のあとに記録すると、ここにケアのタイミングが表示されます。";
+  }
+  const last = records[records.length - 1];
+  const minsSince = (now - last.time) / 60000;
+
+  if ((last.type === "brush" || last.type === "protect") && minsSince < 90) {
+    return "歯磨き・うがいやフッ素などのケアの直後です。お口の中は回復に向かっています。次に何か食べる前に、できるだけ時間を空けましょう。";
+  }
+
+  const foodRecords = records.filter((r) => r.type === "food");
+  if (foodRecords.length === 0) {
+    return "まだ今日の食事の記録がありません。食べたり飲んだりしたら記録してみましょう。";
+  }
+  const lastFood = foodRecords[foodRecords.length - 1];
+  const cat = CATEGORY_DEFS[lastFood.category];
+  const minsSinceFood = (now - lastFood.time) / 60000;
+
+  const recentCount = foodRecords.filter((r) => now - r.time <= 90 * 60000).length;
+  if (recentCount >= 3) {
+    return "この90分で間食が続いています。だらだら食べは口腔内が酸性の時間が長引き、歯にとって負担が大きくなります。次はまとめて食べる・時間を空けるのを意識してみましょう。";
+  }
+  if (cat && cat.id === "sour" && minsSinceFood < 30) {
+    return "酸っぱいものを摂った直後は歯の表面が一時的に柔らかくなっています。今すぐの歯磨きは避け、まず水やお茶で口をゆすぎ、30分ほど待ってから歯磨きするのがおすすめです。";
+  }
+  const brushLabel = formatClock(lastFood.time + 30 * 60000);
+  if (minsSinceFood < 30) {
+    return `${brushLabel}ごろ（最後の記録から約30分後）に歯磨き・うがいをすると効果的です。唾液がpHを回復させる時間を確保できます。`;
+  }
+  return "唾液の働きでpHは回復に向かっています。次に何か食べる前に、水やお茶で軽く口をゆすいでおくと良いでしょう。";
+}
+
+function renderChartSvg(records, now) {
+  const { points, start, end } = buildSeries(records, now);
+  const W = 320, H = 170, PAD_L = 30, PAD_R = 10, PAD_T = 10, PAD_B = 22;
+  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
+  const x = (t) => PAD_L + ((t - start) / Math.max(1, end - start)) * innerW;
+  const y = (ph) => PAD_T + (1 - (ph - PH_MIN) / (PH_MAX - PH_MIN)) * innerH;
+
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.t).toFixed(1)} ${y(p.ph).toFixed(1)}`).join(" ");
+  const dangerY = y(DANGER_PH);
+  const safeY = y(SAFE_PH);
+
+  const markers = records.map((r) => {
+    let color = "#0d9488";
+    if (r.type === "protect") color = "#8b5cf6";
+    if (r.type === "food") {
+      const cat = CATEGORY_DEFS[r.category];
+      color = cat && cat.drop > 0 ? "#dc2626" : "#0ea5e9";
+    }
+    return `<circle cx="${x(r.time).toFixed(1)}" cy="${y(calcPh(records, r.time)).toFixed(1)}" r="3.2" fill="${color}" stroke="var(--card-bg)" stroke-width="1" />`;
+  }).join("");
+
+  const gridLines = [BASELINE, DANGER_PH, PH_MIN].map((v) => `
+    <line x1="${PAD_L}" x2="${W - PAD_R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--chart-grid)" stroke-dasharray="2,3" stroke-width="0.6" />
+    <text x="2" y="${y(v) + 3}" font-size="8" fill="var(--chart-axis-text)">${v.toFixed(1)}</text>
+  `).join("");
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">
+      <rect x="${PAD_L}" y="${PAD_T}" width="${innerW}" height="${safeY - PAD_T}" fill="var(--chart-safe-bg)" />
+      <rect x="${PAD_L}" y="${safeY}" width="${innerW}" height="${dangerY - safeY}" fill="var(--chart-caution-bg)" />
+      <rect x="${PAD_L}" y="${dangerY}" width="${innerW}" height="${PAD_T + innerH - dangerY}" fill="var(--chart-danger-bg)" />
+      ${gridLines}
+      <path d="${path}" fill="none" stroke="var(--chart-line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      ${markers}
+      <text x="${PAD_L}" y="${H - 6}" font-size="8" fill="var(--chart-axis-text)">${formatClock(start)}</text>
+      <text x="${W - PAD_R}" y="${H - 6}" font-size="8" fill="var(--chart-axis-text)" text-anchor="end">${formatClock(end)}</text>
+    </svg>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * 理想の1日サイクル画面
+ * ------------------------------------------------------------------ */
+function currentMinutesOfDay(now) {
+  const d = new Date(now);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function findCurrentScheduleIndex(nowMin) {
+  let idx = -1;
+  for (let i = 0; i < SCHEDULE.length; i++) {
+    if (SCHEDULE[i].start <= nowMin) idx = i;
+  }
+  return idx === -1 ? SCHEDULE.length - 1 : idx;
+}
+
+function minutesToLabel(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function renderCycleScreen() {
+  const nowMin = currentMinutesOfDay(state.now);
+  const curIdx = findCurrentScheduleIndex(nowMin);
+  const items = SCHEDULE.map((s, i) => `
+    <div class="timeline-item ${i === curIdx ? "current" : ""}">
+      <div class="timeline-time">${minutesToLabel(s.start)}</div>
+      <div class="timeline-icon" aria-hidden="true">${s.icon}</div>
+      <div class="timeline-body">
+        <div class="timeline-title">${s.label}${i === curIdx ? '<span class="now-tag">今の時間帯</span>' : ""}</div>
+        ${s.desc ? `<div class="timeline-desc">${s.desc}</div>` : ""}
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div class="screen">
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">理想の食事・歯磨きサイクル</h2>
+      <p style="margin:0;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
+        むし歯予防の基本は、食事の回数を決めて口の中が酸性になる時間を作りすぎないこと、そして食後の歯磨きで区切りをつけることです。以下はあくまで目安の1日の例です。ご自身の生活リズムに合わせて調整してください。
+      </p>
+      <div class="card">${items}</div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * 履歴画面
+ * ------------------------------------------------------------------ */
+function groupRecordsByDay(records) {
+  const map = new Map();
+  for (const r of records) {
+    const key = dayKey(new Date(r.time));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(r);
+  }
+  return map;
+}
+
+function dayMinPh(dayRecords) {
+  const foodRecs = dayRecords.filter((r) => r.type === "food");
+  if (!foodRecs.length) return BASELINE;
+  let min = BASELINE;
+  for (const r of foodRecs) {
+    const ph = calcPh(dayRecords, r.time);
+    if (ph < min) min = ph;
+  }
+  return min;
+}
+
+function zoneDotColor(zoneKey) {
+  return zoneKey === "safe" ? "#22c55e" : zoneKey === "caution" ? "#f59e0b" : "#ef4444";
+}
+
+function computeDayDangerMinutes(dayRecords, dateAtMidnight) {
+  const from = dateAtMidnight.getTime();
+  const isToday = isSameDay(from, state.now);
+  const to = isToday ? state.now : from + 24 * 60 * 60000;
+  return computeZoneMinutes(dayRecords, from, to, 5).dangerMin;
+}
+
+function isGoodDay(dayRecords, dateAtMidnight) {
+  const foodCount = dayRecords.filter((r) => r.type === "food").length;
+  if (foodCount === 0) return null;
+  return computeDayDangerMinutes(dayRecords, dateAtMidnight) <= GOOD_DAY_MAX_DANGER_MIN;
+}
+
+function computeGoodDayStreak(records, now) {
+  if (records.length === 0) return 0;
+  const grouped = groupRecordsByDay(records);
+  let streak = 0;
+  const cursor = new Date(now);
+  cursor.setHours(0, 0, 0, 0);
+  while (true) {
+    const key = dayKey(cursor);
+    const dayRecords = grouped.get(key);
+    if (!dayRecords || dayRecords.length === 0) break;
+    if (isGoodDay(dayRecords, cursor) !== true) break;
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function computeLongestGoodStreak(records) {
+  if (records.length === 0) return 0;
+  const grouped = groupRecordsByDay(records);
+  const earliest = Math.min(...records.map((r) => r.time));
+  const start = new Date(Math.max(earliest, state.now - 90 * 24 * 60 * 60000));
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(state.now);
+  end.setHours(0, 0, 0, 0);
+  let longest = 0, current = 0;
+  for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dayRecords = grouped.get(dayKey(d));
+    const good = dayRecords && dayRecords.length ? isGoodDay(dayRecords, d) : null;
+    if (good === true) {
+      current++;
+      if (current > longest) longest = current;
+    } else {
+      current = 0;
+    }
+  }
+  return longest;
+}
+
+function computeTrendData(records, days) {
+  const grouped = groupRecordsByDay(records);
+  const today = new Date(state.now);
+  today.setHours(0, 0, 0, 0);
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dayRecords = grouped.get(dayKey(d)) || [];
+    const dangerMin = dayRecords.length ? computeDayDangerMinutes(dayRecords, d) : 0;
+    data.push({ date: d, dangerMin, hasRecords: dayRecords.length > 0 });
+  }
+  return data;
+}
+
+function renderTrendSvg(data) {
+  const W = 320, H = 120, PAD_L = 28, PAD_R = 8, PAD_T = 10, PAD_B = 20;
+  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
+  const maxVal = Math.max(60, ...data.map((d) => d.dangerMin));
+  const barW = innerW / data.length;
+  const bars = data.map((d, i) => {
+    const h = d.hasRecords ? Math.max(1, (d.dangerMin / maxVal) * innerH) : 0;
+    const x = PAD_L + i * barW + barW * 0.15;
+    const w = barW * 0.7;
+    const y = PAD_T + innerH - h;
+    const color = !d.hasRecords
+      ? "var(--slate-200)"
+      : d.dangerMin <= GOOD_DAY_MAX_DANGER_MIN
+        ? "var(--chart-safe-bar)"
+        : d.dangerMin <= GOOD_DAY_MAX_DANGER_MIN * 2
+          ? "var(--chart-caution-bar)"
+          : "var(--chart-danger-bar)";
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}" />`;
+  }).join("");
+  const refY = PAD_T + innerH - (GOOD_DAY_MAX_DANGER_MIN / maxVal) * innerH;
+  const firstLabel = `${data[0].date.getMonth() + 1}/${data[0].date.getDate()}`;
+  const lastLabel = `${data[data.length - 1].date.getMonth() + 1}/${data[data.length - 1].date.getDate()}`;
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">
+      <line x1="${PAD_L}" x2="${W - PAD_R}" y1="${refY.toFixed(1)}" y2="${refY.toFixed(1)}" stroke="var(--chart-grid)" stroke-dasharray="2,3" stroke-width="0.6" />
+      <text x="${W - PAD_R}" y="${(refY - 3).toFixed(1)}" font-size="8" fill="var(--chart-axis-text)" text-anchor="end">目安${GOOD_DAY_MAX_DANGER_MIN}分</text>
+      ${bars}
+      <text x="${PAD_L}" y="${H - 6}" font-size="8" fill="var(--chart-axis-text)">${firstLabel}</text>
+      <text x="${W - PAD_R}" y="${H - 6}" font-size="8" fill="var(--chart-axis-text)" text-anchor="end">${lastLabel}</text>
+    </svg>
+  `;
+}
+
+function renderHistoryScreen() {
+  if (state.records.length === 0) {
+    return `
+      <div class="screen">
+        <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">記録の履歴</h2>
+        <p class="hint" style="text-align:left;">まだ記録がありません。ホーム画面から食事や歯磨きを記録すると、ここに日ごとの履歴が積み上がっていきます（データはこの端末のブラウザに保存されます）。</p>
+      </div>
+    `;
+  }
+
+  const grouped = groupRecordsByDay(state.records);
+  const keys = Array.from(grouped.keys()).sort().reverse();
+  const totalFood = state.records.filter((r) => r.type === "food").length;
+  const totalBrush = state.records.filter((r) => r.type === "brush").length;
+  const totalProtect = state.records.filter((r) => r.type === "protect").length;
+  const firstDate = keys[keys.length - 1].replace(/-/g, "/");
+  const longestStreak = computeLongestGoodStreak(state.records);
+  const currentStreak = computeGoodDayStreak(state.records, state.now);
+  const trendData = computeTrendData(state.records, 14);
+
+  let lastMonth = "";
+  const rows = keys.map((key) => {
+    const dayRecords = grouped.get(key);
+    const [y, m, d] = key.split("-");
+    const monthKey = `${y}年${parseInt(m, 10)}月`;
+    const dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    const weekday = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
+    const foodCount = dayRecords.filter((r) => r.type === "food").length;
+    const brushCount = dayRecords.filter((r) => r.type === "brush").length;
+    const protectCount = dayRecords.filter((r) => r.type === "protect").length;
+    const zone = getZone(dayMinPh(dayRecords));
+    const expanded = state.expandedDay === key;
+
+    let header = "";
+    if (monthKey !== lastMonth) {
+      header = `<div class="month-header">${monthKey}</div>`;
+      lastMonth = monthKey;
+    }
+
+    const detail = expanded ? `
+      <div class="day-detail">
+        <ul class="record-list">
+          ${dayRecords.map((r) => {
+            let label;
+            if (r.type === "brush") {
+              label = "🪥 歯磨き・うがい";
+            } else if (r.type === "protect") {
+              const p = getProtectAction(r.protectId);
+              label = p ? `${p.emoji} ${escapeHtml(p.label)}` : "🧪 ケア";
+            } else {
+              const cat = CATEGORY_DEFS[r.category];
+              const mealType = getMealType(r.mealType);
+              label = `${mealType ? mealType.emoji + mealType.label + "・" : ""}${cat.emoji} ${escapeHtml(cat.label)}`;
+            }
+            return `<li><span>${label}</span><span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+          }).join("")}
+        </ul>
+      </div>
+    ` : "";
+
+    return `
+      ${header}
+      <button class="day-row" data-action="toggle-day" data-daykey="${key}" aria-expanded="${expanded}">
+        <span class="day-dot" style="background:${zoneDotColor(zone.key)};" aria-hidden="true"></span>
+        <span class="day-date">${parseInt(m, 10)}/${parseInt(d, 10)}(${weekday})</span>
+        <span class="day-counts">🍽️ ${foodCount}件　🪥 ${brushCount}回${protectCount ? `　🧪 ${protectCount}回` : ""}</span>
+        <span class="day-expand-icon" aria-hidden="true">${expanded ? "▲" : "▼"}</span>
+      </button>
+      ${detail}
+    `;
+  }).join("");
+
+  return `
+    <div class="screen">
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">記録の履歴</h2>
+
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 8px;">直近14日間の「危険域にいた時間」の推移</p>
+        ${renderTrendSvg(trendData)}
+      </div>
+
+      ${currentStreak > 0 ? `
+        <div class="card" style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.625rem;" aria-hidden="true">🔥</span>
+          <div>
+            <p style="margin:0;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">危険な状態が少ない日が ${currentStreak}日連続！</p>
+            <p style="margin:2px 0 0;font-size:0.6875rem;color:var(--slate-500);">最長記録: ${longestStreak}日</p>
+          </div>
+        </div>
+      ` : `
+        <div class="card history-summary">最長連続記録: ${longestStreak}日（危険域が少なかった日が続いた記録です）</div>
+      `}
+
+      <div class="card history-summary">
+        記録開始日: ${firstDate}<br />
+        合計 🍽️ ${totalFood}件の食事記録 ／ 🪥 ${totalBrush}回の歯磨き${totalProtect ? ` ／ 🧪 ${totalProtect}回のケア` : ""}
+      </div>
+
+      <div class="card">${rows}</div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * 永続化（localStorage）
+ * ------------------------------------------------------------------ */
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecords() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
+  } catch (e) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      detailLevel: state.detailLevel,
+      themePref: state.themePref,
+      fontSizePref: state.fontSizePref,
+    }));
+  } catch (e) {}
+}
+
+function isFirstLaunch() {
+  try {
+    return localStorage.getItem(SETTINGS_KEY) === null;
+  } catch (e) {
+    return false;
+  }
+}
+
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveFavorites() {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
+  } catch (e) {}
+}
+
+function applyTheme() {
+  if (state.themePref === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = state.themePref;
+
+  if (state.fontSizePref === "standard") delete document.documentElement.dataset.fontsize;
+  else document.documentElement.dataset.fontsize = state.fontSizePref;
+}
+
+/* ------------------------------------------------------------------ *
+ * アプリ状態と描画
+ * ------------------------------------------------------------------ */
+const savedSettings = loadSettings();
+const state = {
+  records: loadRecords(),
+  favorites: loadFavorites(),
+  screen: "home",
+  showModal: false,
+  showInfo: false,
+  showProtectModal: false,
+  showInstallBanner: false,
+  showOnboarding: isFirstLaunch(),
+  onboardingLevel: DEFAULT_DETAIL_LEVEL,
+  selectedMealType: null,
+  modalStep: "mealtype",
+  selectedCategories: [],
+  selectedProtects: [],
+  expandedDay: null,
+  detailLevel: savedSettings.detailLevel || DEFAULT_DETAIL_LEVEL,
+  themePref: savedSettings.themePref || "auto",
+  fontSizePref: savedSettings.fontSizePref || "standard",
+  now: Date.now(),
+};
+applyTheme();
+
+let deferredInstallPrompt = null;
+
+function todayRecords() {
+  return state.records.filter((r) => isSameDay(r.time, state.now));
+}
+
+function getLastBrushTime() {
+  const brushes = state.records.filter((r) => r.type === "brush");
+  return brushes.length ? Math.max(...brushes.map((r) => r.time)) : null;
+}
+
+function brushCooldownRemainMs() {
+  const last = getLastBrushTime();
+  if (last == null) return 0;
+  const remain = BRUSH_COOLDOWN_MIN * 60000 - (state.now - last);
+  return remain > 0 ? remain : 0;
+}
+
+function todayDangerMinutes() {
+  const records = todayRecords();
+  if (records.length === 0) return 0;
+  return computeZoneMinutes(records, dayStartTs(state.now), state.now, 2).dangerMin;
+}
+
+function renderHome() {
+  const records = todayRecords();
+  const ph = calcPh(records, state.now);
+  const zone = getZone(ph);
+  const exp = getPhExplanation(zone);
+  const dangerPct = ((DANGER_PH - PH_MIN) / (PH_MAX - PH_MIN)) * 100;
+  const pct = Math.max(0, Math.min(100, ((ph - PH_MIN) / (PH_MAX - PH_MIN)) * 100));
+  const lastRecord = records.length ? records[records.length - 1] : null;
+
+  const cooldown = brushCooldownRemainMs();
+  const brushDisabled = cooldown > 0;
+  const brushLabel = brushDisabled ? "🪥 歯磨き済み" : "🪥 歯磨きした";
+
+  const dangerMinToday = todayDangerMinutes();
+  const streak = computeGoodDayStreak(state.records, state.now);
+
+  return `
+    <div class="screen">
+      <div class="card">
+        <div class="row-between">
+          <span class="label-sm">現在の推定 口腔内pH<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
+          <span class="badge badge-${zone.key}">${zone.label}</span>
+        </div>
+        <div class="ph-row">
+          <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
+          <div class="mascot">
+            ${renderMascotSvg(zone.key)}
+            <div class="mascot-caption">${mascotCaption(zone.key)}</div>
+          </div>
+        </div>
+        <div class="gauge-track" aria-hidden="true">
+          <div class="gauge-threshold" style="left:${dangerPct}%;"></div>
+          <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
+        </div>
+        <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
+      </div>
+
+      <div class="card">
+        <p class="explain-status">${exp.status}</p>
+        <div class="explain-row"><span aria-hidden="true">⚠️</span><p>${exp.worsens}</p></div>
+        <div class="explain-row"><span aria-hidden="true">✅</span><p>${exp.helps}</p></div>
+      </div>
+
+      <div class="card row-between">
+        <span class="label-sm">最後の記録からの経過</span>
+        <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
+          ${lastRecord ? formatElapsed(state.now - lastRecord.time) : "記録なし"}
+        </span>
+      </div>
+
+      <div class="card row-between">
+        <span class="label-sm">今日、危険域(pH${DANGER_PH}未満)にいた時間</span>
+        <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+      </div>
+
+      ${streak > 0 ? `
+        <div class="card" style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.625rem;" aria-hidden="true">🔥</span>
+          <div>
+            <p style="margin:0;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">危険な状態が少ない日が ${streak}日連続！</p>
+            <p style="margin:2px 0 0;font-size:0.6875rem;color:var(--slate-500);">このまま続けていきましょう</p>
+          </div>
+        </div>
+      ` : ""}
+
+      ${state.favorites.length ? `
+        <div class="card">
+          <p class="label-sm" style="margin:0 0 8px;">⭐ よく使う組み合わせ</p>
+          <div class="favorites-row">
+            ${state.favorites.map((f) => `
+              <div class="favorite-chip">
+                <button data-action="quick-add-favorite" data-favid="${f.id}">${f.label}</button>
+                <button class="favorite-remove" data-action="remove-favorite" data-favid="${f.id}" aria-label="お気に入りを削除">×</button>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      ` : ""}
+
+      <div class="btn-stack">
+        <button class="cta-btn" data-action="open-modal">🍽️ 食べた／飲んだを記録する</button>
+        <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
+        <button class="secondary-btn" data-action="open-protect-modal">🧪 歯を守るケアを記録</button>
+      </div>
+      <p class="hint">記録するたびに、ステファンカーブの考え方でpHの変化がシミュレーションされます。</p>
+    </div>
+  `;
+}
+
+function renderGraph() {
+  const records = todayRecords();
+  const advice = generateAdvice(records, state.now);
+  const listItems = records.map((r) => {
+    let label;
+    if (r.type === "brush") {
+      label = "🪥 歯磨き・うがい";
+    } else if (r.type === "protect") {
+      const p = getProtectAction(r.protectId);
+      label = p ? `${p.emoji} ${escapeHtml(p.label)}` : "🧪 ケア";
+    } else {
+      const cat = CATEGORY_DEFS[r.category];
+      const mealType = getMealType(r.mealType);
+      const mealPrefix = mealType ? `${mealType.emoji}${mealType.label}・` : "";
+      label = `${mealPrefix}${cat.emoji} ${escapeHtml(cat.label)}`;
+    }
+    return `<li><span>${label}</span><span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+  }).join("");
+
+  return `
+    <div class="screen">
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">今日のpH推移</h2>
+      <div class="chart-card">${renderChartSvg(records, state.now)}</div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:#dc2626;"></span>食品を記録</span>
+        <span><span class="legend-dot" style="background:#0ea5e9;"></span>水・お茶を記録</span>
+        <span><span class="legend-dot" style="background:#0d9488;"></span>歯磨き・うがい</span>
+        <span><span class="legend-dot" style="background:#8b5cf6;"></span>歯を守るケア</span>
+      </div>
+      <div class="advice-box">
+        <p class="advice-title">💡 今日のケアアドバイス</p>
+        <p class="advice-text">${escapeHtml(advice)}</p>
+      </div>
+      ${records.length ? `
+        <div class="card">
+          <p style="margin:0 0 8px;font-size:0.75rem;font-weight:800;color:var(--slate-500);">記録一覧</p>
+          <ul class="record-list">${listItems}</ul>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * 詳細レベル選択カード（設定画面・初回起動画面で共用）
+ * ------------------------------------------------------------------ */
+function renderLevelCards(selectedLevel, action) {
+  return DETAIL_LEVELS.map((d) => {
+    const selected = d.level === selectedLevel;
+    const emojis = d.ids.map((id) => CATEGORY_DEFS[id].emoji).join(" ");
+    return `
+      <button class="level-card ${selected ? "selected" : ""}" data-action="${action}" data-level="${d.level}" aria-pressed="${selected}">
+        <div class="level-card-head">
+          <span class="level-card-title">Lv.${d.level}　${d.name}（${d.ids.length}種類）</span>
+          ${selected ? '<span class="level-check">✓</span>' : ""}
+        </div>
+        <div class="level-card-emojis">${emojis}</div>
+      </button>
+    `;
+  }).join("");
+}
+
+/* ------------------------------------------------------------------ *
+ * 初回起動画面
+ * ------------------------------------------------------------------ */
+function renderOnboarding() {
+  return `
+    <div class="app">
+      <div class="screen" style="padding-top:40px;">
+        <h1 style="margin:0;font-size:1.25rem;font-weight:800;color:var(--slate-800);">ようこそ</h1>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-500);line-height:1.7;">
+          食事を記録するときに選ぶ食品カテゴリの細かさを選んでください。あとから設定画面でいつでも変更できます。
+        </p>
+        <div class="card">
+          <div class="level-list">${renderLevelCards(state.onboardingLevel, "select-onboarding-level")}</div>
+        </div>
+        <button class="cta-btn" data-action="finish-onboarding">この設定で始める</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * 設定画面
+ * ------------------------------------------------------------------ */
+function renderThemeOptions() {
+  const options = [
+    { id: "auto", label: "自動", emoji: "🖥️" },
+    { id: "light", label: "ライト", emoji: "🌞" },
+    { id: "dark", label: "ダーク", emoji: "🌙" },
+  ];
+  return `
+    <div class="option-row">
+      ${options.map((o) => `
+        <button class="option-pill ${state.themePref === o.id ? "selected" : ""}" data-action="set-theme" data-theme="${o.id}" aria-pressed="${state.themePref === o.id}">${o.emoji} ${o.label}</button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderFontSizeOptions() {
+  const options = [
+    { id: "standard", label: "標準" },
+    { id: "large", label: "大きめ" },
+    { id: "xlarge", label: "特大" },
+  ];
+  return `
+    <div class="option-row">
+      ${options.map((o) => `
+        <button class="option-pill ${state.fontSizePref === o.id ? "selected" : ""}" data-action="set-fontsize" data-fontsize="${o.id}" aria-pressed="${state.fontSizePref === o.id}">${o.label}</button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderSettingsScreen() {
+  return `
+    <div class="screen">
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">設定</h2>
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 4px;">食事内容の記録の詳細さ</p>
+        <p style="margin:0 0 14px;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
+          記録するときに選べる食品カテゴリの細かさを5段階から選べます。細かくするほど、より正確にpHの変化をシミュレーションできますが、選ぶ手間は増えます。
+        </p>
+        <div class="level-list">${renderLevelCards(state.detailLevel, "set-detail-level")}</div>
+      </div>
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 10px;">画面の色（ダークモード）</p>
+        ${renderThemeOptions()}
+      </div>
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 10px;">文字の大きさ</p>
+        ${renderFontSizeOptions()}
+      </div>
+    </div>
+  `;
+}
+
+function renderMealTypeStep() {
+  const buttons = MEAL_TYPES.map((m) => `
+    <button class="cat-btn" data-action="select-meal-type" data-mealtype="${m.id}">
+      <span class="cat-emoji">${m.emoji}</span>
+      <span class="cat-label">${m.label}</span>
+    </button>
+  `).join("");
+
+  return `
+    <div class="modal-head">
+      <h2>いつの記録？</h2>
+      <button class="modal-close" data-action="close-modal" aria-label="閉じる">×</button>
+    </div>
+    <div class="cat-grid">${buttons}</div>
+  `;
+}
+
+function renderCategoryStep() {
+  const mealType = getMealType(state.selectedMealType);
+  const buttons = categoriesForLevel(state.detailLevel).map((c) => {
+    const selected = state.selectedCategories.includes(c.id);
+    return `
+    <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-category" data-category="${c.id}" aria-pressed="${selected}">
+      ${selected ? '<span class="cat-check">✓</span>' : ""}
+      <span class="cat-emoji">${c.emoji}</span>
+      <span class="cat-label">${escapeHtml(c.label)}</span>
+      <span class="cat-desc">${escapeHtml(c.desc)}</span>
+    </button>
+  `;
+  }).join("");
+
+  const count = state.selectedCategories.length;
+  const favKey = `${state.selectedMealType}|${state.selectedCategories.slice().sort().join(",")}`;
+  const alreadyFav = state.favorites.some((f) => f.key === favKey);
+
+  return `
+    <div class="modal-head">
+      <h2>${mealType ? `${mealType.emoji} ${mealType.label}` : "何を食べた／飲んだ？"}</h2>
+      <button class="modal-close" data-action="close-modal" aria-label="閉じる">×</button>
+    </div>
+    <button class="back-link" data-action="back-to-mealtype">← 時間帯を選びなおす</button>
+    <p class="hint" style="text-align:left;margin:8px 0 12px;">複数選んでまとめて記録できます</p>
+    <div class="cat-grid">${buttons}</div>
+    <button class="back-link" style="margin-top:14px;display:block;" data-action="save-favorite" ${count === 0 || alreadyFav ? "disabled" : ""}>
+      ${alreadyFav ? "★ お気に入り登録済み" : "☆ この組み合わせをお気に入り登録"}
+    </button>
+    <button class="cta-btn" style="margin-top:10px;" data-action="confirm-record" ${count === 0 ? "disabled" : ""}>
+      ${count === 0 ? "記録する" : `選んだ${count}件を記録する`}
+    </button>
+  `;
+}
+
+function renderModal() {
+  if (!state.showModal) return "";
+  const body = state.modalStep === "category" ? renderCategoryStep() : renderMealTypeStep();
+  return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet">${body}</div>
+    </div>
+  `;
+}
+
+function renderProtectModal() {
+  if (!state.showProtectModal) return "";
+  const buttons = PROTECT_ACTIONS.map((p) => {
+    const selected = state.selectedProtects.includes(p.id);
+    return `
+    <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-protect" data-protect="${p.id}" aria-pressed="${selected}">
+      ${selected ? '<span class="cat-check">✓</span>' : ""}
+      <span class="cat-emoji">${p.emoji}</span>
+      <span class="cat-label">${escapeHtml(p.label)}</span>
+      <span class="cat-desc">${escapeHtml(p.desc)}</span>
+    </button>
+    `;
+  }).join("");
+  const count = state.selectedProtects.length;
+  return `
+    <div class="modal-overlay" data-action="close-protect-modal">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>歯を守るケアを記録</h2>
+          <button class="modal-close" data-action="close-protect-modal" aria-label="閉じる">×</button>
+        </div>
+        <p class="hint" style="text-align:left;margin:-6px 0 12px;">複数選んでまとめて記録できます</p>
+        <div class="cat-grid">${buttons}</div>
+        <button class="cta-btn" style="margin-top:16px;" data-action="confirm-protect" ${count === 0 ? "disabled" : ""}>
+          ${count === 0 ? "記録する" : `選んだ${count}件を記録する`}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderInfoModal() {
+  if (!state.showInfo) return "";
+  return `
+    <div class="modal-overlay" data-action="close-info">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>脱灰・再石灰化ってなに？</h2>
+          <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 脱灰（だっかい）</p>
+            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+              食べ物や飲み物に含まれる糖分をエサに、お口の中の細菌が酸を作り出します。この酸によって、歯の表面（エナメル質）からカルシウムなどのミネラルが溶け出してしまうことを「脱灰」と呼びます。pHが${DANGER_PH}を下回ると、この反応が急速に進むといわれています。
+            </p>
+          </div>
+          <div>
+            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 再石灰化（さいせっかいか）</p>
+            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+              唾液にはカルシウムやリンなどのミネラルが含まれていて、溶け出した歯の表面を少しずつ修復してくれます。これを「再石灰化」と呼びます。
+            </p>
+          </div>
+          <div>
+            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらい続くとよくないの？</p>
+            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+              1回だけ短時間酸性に傾いても、唾液の力ですぐに回復しやすく、大きな問題にはなりにくいとされています。ただし一般的には、pHが臨界値（${DANGER_PH}）を下回る状態が1回あたり${GOOD_DAY_MAX_DANGER_MIN}分前後より長く続くと、唾液による回復が追いつきにくくなり、脱灰が優勢な時間が延びやすいといわれています。1日の中で危険域にいた時間の合計も、むし歯リスクの目安になります。ホーム画面や履歴画面の「危険域にいた時間」を参考にしてみてください。
+            </p>
+          </div>
+          <div>
+            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+              この2つは毎日、何度も繰り返されています。脱灰の時間が長すぎたり、頻繁すぎたりして再石灰化が追いつかなくなると、むし歯につながります。だからこそ「食べる回数」と「時間の間隔」、そして「歯磨きのタイミング」が大切なのです。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function render() {
+  const root = document.getElementById("root");
+  if (state.showOnboarding) {
+    root.innerHTML = renderOnboarding();
+    return;
+  }
+  const screens = { home: renderHome, graph: renderGraph, cycle: renderCycleScreen, history: renderHistoryScreen, settings: renderSettingsScreen };
+  root.innerHTML = `
+    <div class="app">
+      ${state.showInstallBanner ? `
+        <div class="install-banner">
+          <span>📲 ホーム画面に追加すると、アプリのように使えます</span>
+          <div class="install-banner-actions">
+            <button data-action="install-pwa">追加</button>
+            <button data-action="dismiss-install-banner" aria-label="閉じる">×</button>
+          </div>
+        </div>
+      ` : ""}
+      <div class="header">
+        <div class="header-row">
+          <div>
+            <h1>Oral pH Coach</h1>
+            <p>口腔内pHシミュレーション（プロトタイプ）</p>
+          </div>
+          <button class="settings-btn" data-action="go-settings" aria-label="設定">⚙️</button>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="${state.screen === "home" ? "active" : ""}" data-action="go-home" aria-current="${state.screen === "home" ? "page" : "false"}">🏠 ホーム</button>
+        <button class="${state.screen === "graph" ? "active" : ""}" data-action="go-graph" aria-current="${state.screen === "graph" ? "page" : "false"}">📈 グラフ</button>
+        <button class="${state.screen === "cycle" ? "active" : ""}" data-action="go-cycle" aria-current="${state.screen === "cycle" ? "page" : "false"}">🕒 サイクル</button>
+        <button class="${state.screen === "history" ? "active" : ""}" data-action="go-history" aria-current="${state.screen === "history" ? "page" : "false"}">📅 履歴</button>
+      </div>
+      <div class="main">${screens[state.screen]()}</div>
+      <p class="disclaimer">※このグラフは一般的な研究知見（ステファンカーブ）に基づく目安のシミュレーションであり、実測値ではありません。虫歯や歯周病が気になる場合は歯科医院にご相談ください。</p>
+    </div>
+    ${renderModal()}
+    ${renderProtectModal()}
+    ${renderInfoModal()}
+  `;
+}
+
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const action = el.dataset.action;
+
+  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal") && e.target !== el) return;
+
+  switch (action) {
+    case "install-pwa":
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.finally(() => {
+          deferredInstallPrompt = null;
+          state.showInstallBanner = false;
+          render();
+        });
+      }
+      break;
+    case "dismiss-install-banner":
+      state.showInstallBanner = false;
+      render();
+      break;
+    case "open-modal":
+      state.showModal = true;
+      state.modalStep = "mealtype";
+      state.selectedMealType = null;
+      state.selectedCategories = [];
+      render();
+      break;
+    case "close-modal":
+      state.showModal = false;
+      state.modalStep = "mealtype";
+      state.selectedMealType = null;
+      state.selectedCategories = [];
+      render();
+      break;
+    case "select-meal-type":
+      state.selectedMealType = el.dataset.mealtype;
+      state.modalStep = "category";
+      render();
+      break;
+    case "back-to-mealtype":
+      state.modalStep = "mealtype";
+      render();
+      break;
+    case "save-favorite": {
+      if (state.selectedCategories.length === 0) return;
+      const key = `${state.selectedMealType}|${state.selectedCategories.slice().sort().join(",")}`;
+      if (state.favorites.some((f) => f.key === key)) return;
+      if (state.favorites.length >= 8) return;
+      const mealType = getMealType(state.selectedMealType);
+      const label = `${mealType ? mealType.emoji : ""}${state.selectedCategories.map((id) => CATEGORY_DEFS[id].emoji).join("")}`;
+      state.favorites.push({ id: Date.now() + Math.random(), key, mealType: state.selectedMealType, categories: state.selectedCategories.slice(), label });
+      saveFavorites();
+      render();
+      break;
+    }
+    case "quick-add-favorite": {
+      const fav = state.favorites.find((f) => String(f.id) === el.dataset.favid);
+      if (!fav) return;
+      const time = Date.now();
+      for (const catId of fav.categories) {
+        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: fav.mealType, time });
+      }
+      state.now = Date.now();
+      saveRecords();
+      render();
+      break;
+    }
+    case "remove-favorite":
+      state.favorites = state.favorites.filter((f) => String(f.id) !== el.dataset.favid);
+      saveFavorites();
+      render();
+      break;
+    case "open-protect-modal":
+      state.showProtectModal = true;
+      state.selectedProtects = [];
+      render();
+      break;
+    case "close-protect-modal":
+      state.showProtectModal = false;
+      state.selectedProtects = [];
+      render();
+      break;
+    case "toggle-protect": {
+      const pid = el.dataset.protect;
+      const idx = state.selectedProtects.indexOf(pid);
+      if (idx === -1) state.selectedProtects.push(pid);
+      else state.selectedProtects.splice(idx, 1);
+      render();
+      break;
+    }
+    case "confirm-protect": {
+      if (state.selectedProtects.length === 0) return;
+      const time = Date.now();
+      for (const pid of state.selectedProtects) {
+        state.records.push({ id: time + Math.random(), type: "protect", protectId: pid, time });
+      }
+      state.showProtectModal = false;
+      state.selectedProtects = [];
+      state.now = Date.now();
+      saveRecords();
+      render();
+      break;
+    }
+    case "delete-record": {
+      if (!confirm("この記録を削除しますか？")) return;
+      const id = el.dataset.id;
+      state.records = state.records.filter((r) => String(r.id) !== id);
+      saveRecords();
+      render();
+      break;
+    }
+    case "toggle-day":
+      state.expandedDay = state.expandedDay === el.dataset.daykey ? null : el.dataset.daykey;
+      render();
+      break;
+    case "select-onboarding-level":
+      state.onboardingLevel = Number(el.dataset.level);
+      render();
+      break;
+    case "finish-onboarding":
+      state.detailLevel = state.onboardingLevel;
+      state.showOnboarding = false;
+      saveSettings();
+      render();
+      break;
+    case "open-info":
+      state.showInfo = true;
+      render();
+      break;
+    case "close-info":
+      state.showInfo = false;
+      render();
+      break;
+    case "go-home":
+      state.screen = "home";
+      render();
+      break;
+    case "go-graph":
+      state.screen = "graph";
+      render();
+      break;
+    case "go-cycle":
+      state.screen = "cycle";
+      render();
+      break;
+    case "go-history":
+      state.screen = "history";
+      render();
+      break;
+    case "go-settings":
+      state.screen = "settings";
+      render();
+      break;
+    case "set-detail-level":
+      state.detailLevel = Number(el.dataset.level);
+      saveSettings();
+      render();
+      break;
+    case "set-theme":
+      state.themePref = el.dataset.theme;
+      saveSettings();
+      applyTheme();
+      render();
+      break;
+    case "set-fontsize":
+      state.fontSizePref = el.dataset.fontsize;
+      saveSettings();
+      applyTheme();
+      render();
+      break;
+    case "toggle-category": {
+      const catId = el.dataset.category;
+      const idx = state.selectedCategories.indexOf(catId);
+      if (idx === -1) state.selectedCategories.push(catId);
+      else state.selectedCategories.splice(idx, 1);
+      render();
+      break;
+    }
+    case "confirm-record": {
+      if (state.selectedCategories.length === 0) return;
+      const time = Date.now();
+      for (const catId of state.selectedCategories) {
+        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: state.selectedMealType, time });
+      }
+      state.showModal = false;
+      state.modalStep = "mealtype";
+      state.selectedMealType = null;
+      state.selectedCategories = [];
+      state.now = Date.now();
+      saveRecords();
+      render();
+      break;
+    }
+    case "add-brush":
+      if (brushCooldownRemainMs() > 0) return;
+      state.records.push({ id: Date.now() + Math.random(), type: "brush", time: Date.now() });
+      state.now = Date.now();
+      saveRecords();
+      render();
+      break;
+  }
+});
+
+setInterval(() => {
+  state.now = Date.now();
+  render();
+}, 5000);
+
+render();
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (!isStandalone) {
+    state.showInstallBanner = true;
+    render();
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  state.showInstallBanner = false;
+  deferredInstallPrompt = null;
+  render();
+});
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((err) => console.warn("Service worker registration failed:", err));
+  });
+}
+</script>
+</body>
+</html>
