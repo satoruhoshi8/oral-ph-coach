@@ -261,6 +261,25 @@
   .profile-list { display: flex; flex-direction: column; }
   .profile-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--slate-100); }
   .profile-row:last-child { border-bottom: none; }
+
+  .stamp-row { display: flex; justify-content: space-between; gap: 4px; }
+  .stamp-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .stamp-icon { width: 2.25rem; height: 2.25rem; border-radius: 999px; background: var(--slate-50); border: 1.5px solid var(--slate-200); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+  .stamp-cell.good .stamp-icon { background: var(--accent-soft-bg-strong); border-color: var(--teal); }
+  .stamp-cell.bad .stamp-icon { background: var(--red-bg); border-color: var(--red); }
+  .stamp-cell.today .stamp-icon { border-style: dashed; border-color: var(--slate-400); }
+  .stamp-day { font-size: 0.625rem; color: var(--slate-400); }
+
+  .celebrate-toast { position: fixed; top: 16px; left: 50%; background: var(--teal); color: #fff; padding: 10px 20px; border-radius: 999px;
+    font-size: 0.9375rem; font-weight: 800; box-shadow: 0 8px 20px rgba(13,148,136,0.35); z-index: 60; display: flex; align-items: center; gap: 8px;
+    pointer-events: none; animation: celebrate-pop 2.2s ease forwards; }
+  @keyframes celebrate-pop {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.9); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.05); }
+    25% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    80% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.98); }
+  }
 </style>
 </head>
 <body>
@@ -475,10 +494,30 @@ function renderMascotSvg(zoneKey) {
   `;
 }
 
-function mascotCaption(zoneKey) {
-  if (zoneKey === "safe") return "元気な状態！このまま安定をキープ";
-  if (zoneKey === "caution") return "菌がすこし元気に…注意しましょう";
-  return "虫歯菌が活発化中！今すぐケアを";
+/* マスコットのひとこと。ゾーンごとに複数バリエーションを持たせ、30分ごとに入れ替える */
+const MASCOT_MESSAGES = {
+  safe: [
+    "は元気いっぱい！このまま安定をキープ",
+    "、げんきそう！このちょうしでいこう",
+    "はにこにこ笑顔！ばっちりだよ",
+  ],
+  caution: [
+    "がすこし元気なくなってきたよ…注意しよう",
+    "がむしば菌にちょっとねらわれてるかも",
+    "をまもるために、そろそろケアしよう",
+  ],
+  danger: [
+    "がむしば菌におそわれてる！今すぐケアして！",
+    "がピンチ！はみがきで助けてあげよう",
+    "…むしば菌が元気いっぱいに！守ってあげて",
+  ],
+};
+
+function mascotCaption(zoneKey, mascotName) {
+  const name = mascotName && mascotName.trim() ? mascotName.trim() : "はみがき戦士";
+  const variants = MASCOT_MESSAGES[zoneKey] || MASCOT_MESSAGES.safe;
+  const idx = Math.floor(state.now / (30 * 60000)) % variants.length;
+  return `${name}${variants[idx]}`;
 }
 
 function formatClock(ts) {
@@ -735,6 +774,50 @@ function computeGoodDayStreak(records, now) {
   return streak;
 }
 
+/* 直近7日間のスタンプカード用データ */
+function computeWeekStamps(records, now) {
+  const grouped = groupRecordsByDay(records);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dayRecords = grouped.get(dayKey(d));
+    const isToday = i === 0;
+    let status;
+    if (!dayRecords || dayRecords.length === 0) {
+      status = isToday ? "today" : "none";
+    } else {
+      const good = isGoodDay(dayRecords, d);
+      status = good === null ? (isToday ? "today" : "none") : good ? "good" : "bad";
+    }
+    days.push({ date: d, status });
+  }
+  return days;
+}
+
+function renderWeekStampCard(records) {
+  const days = computeWeekStamps(records, state.now);
+  const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+  const cells = days.map((d) => {
+    const icon = d.status === "good" ? "⭐" : d.status === "bad" ? "💧" : d.status === "today" ? "・" : "";
+    return `
+      <div class="stamp-cell ${d.status}">
+        <div class="stamp-icon" aria-hidden="true">${icon}</div>
+        <div class="stamp-day">${weekdayLabels[d.date.getDay()]}</div>
+      </div>
+    `;
+  }).join("");
+  return `
+    <div class="card">
+      <p class="label-sm" style="margin:0 0 10px;">今週のスタンプカード</p>
+      <div class="stamp-row">${cells}</div>
+      <p style="margin:10px 0 0;font-size:0.6875rem;color:var(--slate-500);">⭐ 危険域が目安以下だった日 ／ 💧 もう少しだった日</p>
+    </div>
+  `;
+}
+
 function computeLongestGoodStreak(records) {
   if (records.length === 0) return 0;
   const grouped = groupRecordsByDay(records);
@@ -972,7 +1055,7 @@ function saveFavorites() {
   } catch (e) {}
 }
 
-const DEFAULT_PROFILE = { id: "default", name: "わたし", avatar: "⭐", ageGroup: "adult" };
+const DEFAULT_PROFILE = { id: "default", name: "わたし", avatar: "⭐", ageGroup: "adult", mascotName: "" };
 
 function loadProfiles() {
   try {
@@ -1066,6 +1149,7 @@ const state = {
   profileDraftName: "",
   profileDraftAvatar: PROFILE_AVATARS[0],
   profileDraftAgeGroup: "child",
+  profileDraftMascotName: "",
   showInstallBanner: false,
   showOnboarding: isFirstLaunch(),
   onboardingLevel: DEFAULT_DETAIL_LEVEL,
@@ -1079,6 +1163,7 @@ const state = {
   fontSizePref: savedSettings.fontSizePref || "standard",
   showDailyFeedback: false,
   dailyFeedback: null,
+  celebrate: null,
   now: Date.now(),
 };
 applyTheme();
@@ -1097,6 +1182,16 @@ migrateProfileOwnership();
 })();
 
 let deferredInstallPrompt = null;
+let celebrateTimer = null;
+
+function triggerCelebration(emoji, text) {
+  state.celebrate = { emoji, text };
+  clearTimeout(celebrateTimer);
+  celebrateTimer = setTimeout(() => {
+    state.celebrate = null;
+    render();
+  }, 2200);
+}
 
 function todayRecords() {
   return state.records.filter((r) => r.profileId === state.activeProfileId && isSameDay(r.time, state.now));
@@ -1134,8 +1229,10 @@ function renderHome() {
   const brushLabel = brushDisabled ? "🪥 歯磨き済み" : "🪥 歯磨きした";
 
   const dangerMinToday = todayDangerMinutes();
-  const streak = computeGoodDayStreak(activeProfileRecords(), state.now);
+  const myRecords = activeProfileRecords();
+  const streak = computeGoodDayStreak(myRecords, state.now);
   const favorites = activeProfileFavorites();
+  const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
 
   return `
     <div class="screen">
@@ -1148,7 +1245,7 @@ function renderHome() {
           <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
           <div class="mascot">
             ${renderMascotSvg(zone.key)}
-            <div class="mascot-caption">${mascotCaption(zone.key)}</div>
+            <div class="mascot-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</div>
           </div>
         </div>
         <div class="gauge-track" aria-hidden="true">
@@ -1188,6 +1285,8 @@ function renderHome() {
           </div>
         </div>
       ` : ""}
+
+      ${renderWeekStampCard(myRecords)}
 
       ${favorites.length ? `
         <div class="card">
@@ -1541,6 +1640,10 @@ function renderProfileModal() {
         <div class="avatar-grid">${avatarButtons}</div>
         <p class="label-sm" style="margin:16px 0 6px;">タイプ</p>
         <div class="option-row">${ageButtons}</div>
+        <p class="label-sm" style="margin:16px 0 6px;">はみがきキャラクターの名前（にんい）</p>
+        <input id="profile-mascot-input" type="text" maxlength="8" placeholder="例: はみがき戦士" value="${escapeHtml(state.profileDraftMascotName)}"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--slate-200);background:var(--slate-50);color:var(--slate-800);font-size:0.9375rem;box-sizing:border-box;" />
+        <p class="hint" style="text-align:left;margin:6px 0 0;">名前をつけると、ホーム画面でその名前で呼びかけます</p>
         ${isEditing ? `<button class="back-link" style="margin-top:16px;display:block;color:var(--red);" data-action="delete-profile">このプロフィールを削除</button>` : ""}
         <button class="cta-btn" style="margin-top:16px;" data-action="save-profile">${isEditing ? "保存する" : "追加する"}</button>
       </div>
@@ -1591,6 +1694,7 @@ function render() {
   }
   const screens = { home: renderHome, graph: renderGraph, cycle: renderCycleScreen, history: renderHistoryScreen, settings: renderSettingsScreen };
   root.innerHTML = `
+    ${state.celebrate ? `<div class="celebrate-toast">${state.celebrate.emoji} ${escapeHtml(state.celebrate.text)}</div>` : ""}
     <div class="app">
       ${state.showInstallBanner ? `
         <div class="install-banner">
@@ -1736,6 +1840,7 @@ document.addEventListener("click", (e) => {
       state.selectedProtects = [];
       state.now = Date.now();
       saveRecords();
+      triggerCelebration("🧪", "ケアできたね！");
       render();
       break;
     }
@@ -1834,6 +1939,7 @@ document.addEventListener("click", (e) => {
       state.records.push({ id: Date.now() + Math.random(), type: "brush", profileId: state.activeProfileId, time: Date.now() });
       state.now = Date.now();
       saveRecords();
+      triggerCelebration("✨", "できたね！");
       render();
       break;
     case "switch-profile":
@@ -1848,6 +1954,7 @@ document.addEventListener("click", (e) => {
       state.profileDraftName = "";
       state.profileDraftAvatar = PROFILE_AVATARS[0];
       state.profileDraftAgeGroup = "child";
+      state.profileDraftMascotName = "";
       render();
       break;
     case "open-edit-profile": {
@@ -1858,6 +1965,7 @@ document.addEventListener("click", (e) => {
       state.profileDraftName = p.name;
       state.profileDraftAvatar = p.avatar;
       state.profileDraftAgeGroup = p.ageGroup;
+      state.profileDraftMascotName = p.mascotName || "";
       render();
       break;
     }
@@ -1875,7 +1983,9 @@ document.addEventListener("click", (e) => {
       break;
     case "save-profile": {
       const nameInput = document.getElementById("profile-name-input");
+      const mascotInput = document.getElementById("profile-mascot-input");
       const name = (nameInput ? nameInput.value : state.profileDraftName).trim();
+      const mascotName = (mascotInput ? mascotInput.value : state.profileDraftMascotName).trim();
       if (!name) return;
       if (state.editingProfileId) {
         const p = state.profiles.find((pr) => pr.id === state.editingProfileId);
@@ -1883,9 +1993,10 @@ document.addEventListener("click", (e) => {
           p.name = name;
           p.avatar = state.profileDraftAvatar;
           p.ageGroup = state.profileDraftAgeGroup;
+          p.mascotName = mascotName;
         }
       } else {
-        const newProfile = { id: `p${Date.now()}${Math.floor(Math.random() * 1000)}`, name, avatar: state.profileDraftAvatar, ageGroup: state.profileDraftAgeGroup };
+        const newProfile = { id: `p${Date.now()}${Math.floor(Math.random() * 1000)}`, name, avatar: state.profileDraftAvatar, ageGroup: state.profileDraftAgeGroup, mascotName };
         state.profiles.push(newProfile);
         state.activeProfileId = newProfile.id;
       }
@@ -1915,6 +2026,9 @@ document.addEventListener("click", (e) => {
 document.addEventListener("input", (e) => {
   if (e.target && e.target.id === "profile-name-input") {
     state.profileDraftName = e.target.value;
+  }
+  if (e.target && e.target.id === "profile-mascot-input") {
+    state.profileDraftMascotName = e.target.value;
   }
 });
 
