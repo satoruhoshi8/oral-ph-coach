@@ -127,6 +127,7 @@
   .header p { margin: 2px 0 0; font-size:0.75rem; color: var(--slate-400); }
   .settings-btn { background: none; border: none; padding: 6px; color: var(--slate-500); flex-shrink: 0; display: flex; }
   .nav-icon-svg { display: block; }
+  .icon-chip { display: inline-flex; align-items: center; justify-content: center; border-radius: 30%; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.15); vertical-align: middle; }
   .main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
   .screen { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
 
@@ -166,7 +167,7 @@
   .checklist { display: flex; flex-direction: column; gap: 8px; }
   .checklist-item { display: flex; align-items: center; gap: 10px; font-size:0.8125rem; color: var(--slate-400); }
   .checklist-item.done { color: var(--slate-800); font-weight: 700; }
-  .checklist-icon { font-size:1.125rem; width: 1.5rem; text-align: center; flex-shrink: 0; }
+  .checklist-icon { display: flex; align-items: center; flex-shrink: 0; }
 
   .explain-status { margin: 0 0 12px; font-size:0.875rem; font-weight: 700; color: var(--slate-800); line-height: 1.6; }
   .explain-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
@@ -208,7 +209,6 @@
   .cat-btn:active { background: var(--accent-soft-bg-strong); border-color: var(--accent-soft-border); }
   .cat-btn.selected { background: var(--accent-soft-bg-strong); border: 1.5px solid var(--teal); }
   .cat-check { position: absolute; top: 8px; right: 10px; color: var(--teal); font-weight: 800; font-size:0.8125rem; }
-  .cat-emoji { font-size:1.75rem; }
   .cat-label { font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
   .cat-desc { font-size:0.625rem; color: var(--slate-400); line-height: 1.3; }
 
@@ -228,8 +228,8 @@
   .timeline-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--slate-100); }
   .timeline-item:last-child { border-bottom: none; }
   .timeline-time { width: 44px; flex-shrink: 0; font-size:0.75rem; font-weight: 700; color: var(--slate-500); padding-top: 6px; }
-  .timeline-icon { width: 32px; height: 32px; border-radius: 999px; background: var(--slate-50); display: flex; align-items: center; justify-content: center; font-size:1.0rem; flex-shrink: 0; }
-  .timeline-item.current .timeline-icon { background: var(--accent-soft-bg-strong); }
+  .timeline-icon { flex-shrink: 0; }
+  .timeline-item.current .timeline-icon .icon-chip { box-shadow: 0 0 0 2.5px var(--teal); }
   .timeline-body { flex: 1; padding-top: 4px; }
   .timeline-title { font-size:0.875rem; font-weight: 700; color: var(--slate-800); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
   .timeline-item.current .timeline-title { color: var(--teal-dark); }
@@ -263,7 +263,7 @@
   .level-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .level-card-title { font-size:0.8125rem; font-weight: 800; color: var(--slate-700); }
   .level-check { color: var(--teal); font-weight: 800; flex-shrink: 0; }
-  .level-card-emojis { margin-top: 6px; font-size:1.0rem; letter-spacing: 2px; }
+  .level-card-emojis { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
 
   .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .option-pill { padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--slate-200); background: var(--slate-50); font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
@@ -288,8 +288,6 @@
   .stamp-row { display: flex; justify-content: space-between; gap: 4px; }
   .stamp-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
   .stamp-icon { width: 2.25rem; height: 2.25rem; border-radius: 999px; background: var(--slate-50); border: 1.5px solid var(--slate-200); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
-  .stamp-cell.good .stamp-icon { background: var(--accent-soft-bg-strong); border-color: var(--teal); }
-  .stamp-cell.bad .stamp-icon { background: var(--red-bg); border-color: var(--red); }
   .stamp-cell.today .stamp-icon { border-style: dashed; border-color: var(--slate-400); }
   .stamp-day { font-size: 0.625rem; color: var(--slate-400); }
 
@@ -305,7 +303,7 @@
   }
 
   .reminder-card { display: flex; align-items: center; gap: 12px; background: var(--amber-bg); border: 1px solid var(--amber); }
-  .reminder-dismiss { background: var(--card-bg); border: 1.5px solid var(--amber); border-radius: 999px; width: 2.75rem; height: 2.75rem; font-size: 1.25rem; flex-shrink: 0; }
+  .reminder-dismiss { background: var(--card-bg); border: 1.5px solid var(--amber); border-radius: 999px; width: 2.75rem; height: 2.75rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body>
@@ -319,30 +317,30 @@
  *             値が大きいほど、ダラダラと長く低pH状態が続く
  * ------------------------------------------------------------------ */
 const CATEGORY_DEFS = {
-  sweet:            { label: "甘い・酸っぱいもの",     emoji: "🍬", drop: 1.6, halfLife: 20, desc: "お菓子・ジュース・果物など" },
-  sweet_strong:     { label: "甘いもの（強）",         emoji: "🍫", drop: 1.8, halfLife: 20, desc: "チョコ・キャンディ・ジュースなど" },
-  sweet_weak:       { label: "甘いもの（弱）",         emoji: "🍪", drop: 1.0, halfLife: 15, desc: "クッキー・菓子パンなど" },
-  sour:             { label: "酸っぱいもの",           emoji: "🍋", drop: 2.0, halfLife: 25, desc: "柑橘・酢・炭酸飲料など" },
-  carb:             { label: "炭水化物",               emoji: "🍚", drop: 1.2, halfLife: 15, desc: "ご飯・パン・麺など" },
-  water:            { label: "水・お茶",               emoji: "💧", drop: 0,   halfLife: 1,  desc: "糖分・酸を含まない飲み物" },
-  meal:             { label: "その他の食事",           emoji: "🍽️", drop: 0.8, halfLife: 10, desc: "バランスの良い食事など" },
+  sweet:            { label: "甘い・酸っぱいもの",     emoji: "🍬", icon: "candy",    drop: 1.6, halfLife: 20, desc: "お菓子・ジュース・果物など" },
+  sweet_strong:     { label: "甘いもの（強）",         emoji: "🍫", icon: "chocolate", drop: 1.8, halfLife: 20, desc: "チョコ・キャンディ・ジュースなど" },
+  sweet_weak:       { label: "甘いもの（弱）",         emoji: "🍪", icon: "cookie",   drop: 1.0, halfLife: 15, desc: "クッキー・菓子パンなど" },
+  sour:             { label: "酸っぱいもの",           emoji: "🍋", icon: "citrus",   drop: 2.0, halfLife: 25, desc: "柑橘・酢・炭酸飲料など" },
+  carb:             { label: "炭水化物",               emoji: "🍚", icon: "ricebowl", drop: 1.2, halfLife: 15, desc: "ご飯・パン・麺など" },
+  water:            { label: "水・お茶",               emoji: "💧", icon: "water",    drop: 0,   halfLife: 1,  desc: "糖分・酸を含まない飲み物" },
+  meal:             { label: "その他の食事",           emoji: "🍽️", icon: "plate",    drop: 0.8, halfLife: 10, desc: "バランスの良い食事など" },
 
-  rice:             { label: "ご飯・米",               emoji: "🍚", drop: 1.1, halfLife: 14, desc: "白米・おにぎりなど" },
-  bread_noodle:     { label: "パン・麺",               emoji: "🍞", drop: 1.3, halfLife: 16, desc: "食パン・麺類など" },
-  fruit:            { label: "果物",                   emoji: "🍎", drop: 1.3, halfLife: 18, desc: "りんご・バナナなど（柑橘以外）" },
-  dairy:            { label: "乳製品",                 emoji: "🥛", drop: 0.3, halfLife: 8,  desc: "牛乳・チーズ・ヨーグルトなど（歯に優しい）" },
+  rice:             { label: "ご飯・米",               emoji: "🍚", icon: "ricebowl", drop: 1.1, halfLife: 14, desc: "白米・おにぎりなど" },
+  bread_noodle:     { label: "パン・麺",               emoji: "🍞", icon: "bread",    drop: 1.3, halfLife: 16, desc: "食パン・麺類など" },
+  fruit:            { label: "果物",                   emoji: "🍎", icon: "apple",    drop: 1.3, halfLife: 18, desc: "りんご・バナナなど（柑橘以外）" },
+  dairy:            { label: "乳製品",                 emoji: "🥛", icon: "milk",     drop: 0.3, halfLife: 8,  desc: "牛乳・チーズ・ヨーグルトなど（歯に優しい）" },
 
-  chocolate:        { label: "チョコレート",           emoji: "🍫", drop: 1.9, halfLife: 22, desc: "口の中に残りやすい甘さ" },
-  candy:            { label: "キャンディ・グミ",       emoji: "🍬", drop: 1.9, halfLife: 26, desc: "溶けるまで長く口にとどまる" },
-  juice:            { label: "ジュース",               emoji: "🧃", drop: 1.6, halfLife: 16, desc: "果汁飲料・加糖飲料など" },
-  soda:             { label: "炭酸飲料",               emoji: "🥤", drop: 2.0, halfLife: 18, desc: "コーラ・サイダーなど" },
-  citrus:           { label: "柑橘類",                 emoji: "🍋", drop: 1.9, halfLife: 22, desc: "みかん・レモン・グレープフルーツなど" },
-  vinegar:          { label: "酢の物・ドレッシング",   emoji: "🍶", drop: 1.7, halfLife: 20, desc: "酢の物・ピクルスなど" },
-  snack:            { label: "スナック・揚げ物",       emoji: "🍟", drop: 1.1, halfLife: 16, desc: "ポテトチップス・揚げ物系おつまみなど" },
+  chocolate:        { label: "チョコレート",           emoji: "🍫", icon: "chocolate", drop: 1.9, halfLife: 22, desc: "口の中に残りやすい甘さ" },
+  candy:            { label: "キャンディ・グミ",       emoji: "🍬", icon: "candy",    drop: 1.9, halfLife: 26, desc: "溶けるまで長く口にとどまる" },
+  juice:            { label: "ジュース",               emoji: "🧃", icon: "juicebox", drop: 1.6, halfLife: 16, desc: "果汁飲料・加糖飲料など" },
+  soda:             { label: "炭酸飲料",               emoji: "🥤", icon: "sodacup",  drop: 2.0, halfLife: 18, desc: "コーラ・サイダーなど" },
+  citrus:           { label: "柑橘類",                 emoji: "🍋", icon: "citrus",   drop: 1.9, halfLife: 22, desc: "みかん・レモン・グレープフルーツなど" },
+  vinegar:          { label: "酢の物・ドレッシング",   emoji: "🍶", icon: "vinegar",  drop: 1.7, halfLife: 20, desc: "酢の物・ピクルスなど" },
+  snack:            { label: "スナック・揚げ物",       emoji: "🍟", icon: "fries",    drop: 1.1, halfLife: 16, desc: "ポテトチップス・揚げ物系おつまみなど" },
 
-  cake:             { label: "ケーキ・洋菓子",         emoji: "🍰", drop: 1.7, halfLife: 20, desc: "誕生日ケーキ・シュークリームなど" },
-  ice_cream:        { label: "アイス",                 emoji: "🍦", drop: 1.3, halfLife: 14, desc: "溶けて糖分が広がりやすい" },
-  coffee_tea_sweet: { label: "加糖コーヒー・紅茶",     emoji: "☕", drop: 1.2, halfLife: 15, desc: "砂糖やミルクを加えたもの" },
+  cake:             { label: "ケーキ・洋菓子",         emoji: "🍰", icon: "cake",     drop: 1.7, halfLife: 20, desc: "誕生日ケーキ・シュークリームなど" },
+  ice_cream:        { label: "アイス",                 emoji: "🍦", icon: "icecream", drop: 1.3, halfLife: 14, desc: "溶けて糖分が広がりやすい" },
+  coffee_tea_sweet: { label: "加糖コーヒー・紅茶",     emoji: "☕", icon: "coffee",   drop: 1.2, halfLife: 15, desc: "砂糖やミルクを加えたもの" },
 };
 
 /* 食事記録の詳細さ（5段階）。数字が大きいほど選べるカテゴリが増える。
@@ -363,10 +361,10 @@ function categoriesForLevel(level) {
 
 /* 食事の記録はまず「いつの食事か」を選んでから、食品カテゴリを選ぶ */
 const MEAL_TYPES = [
-  { id: "breakfast", label: "朝食", emoji: "🌅" },
-  { id: "lunch",     label: "昼食", emoji: "☀️" },
-  { id: "dinner",    label: "夕食", emoji: "🌙" },
-  { id: "snack",     label: "間食", emoji: "🍪" },
+  { id: "breakfast", label: "朝食", emoji: "🌅", icon: "sunrise" },
+  { id: "lunch",     label: "昼食", emoji: "☀️", icon: "sun" },
+  { id: "dinner",    label: "夕食", emoji: "🌙", icon: "moon" },
+  { id: "snack",     label: "間食", emoji: "🍪", icon: "cookie" },
 ];
 
 function getMealType(id) {
@@ -382,34 +380,53 @@ const PROFILE_AGE_GROUPS = [
 
 /* 歯を守る行動（脱灰を防ぐ・再石灰化を助ける）の記録 */
 const PROTECT_ACTIONS = [
-  { id: "fluoride", label: "フッ素（洗口・歯磨き粉）", emoji: "🧪", reduction: 0.35, desc: "歯の再石灰化を助け、酸への抵抗力を高めます" },
-  { id: "xylitol",  label: "キシリトールガム",         emoji: "🍬", reduction: 0.25, desc: "唾液の分泌を促し、酸を中和する助けになります" },
-  { id: "rinse",    label: "洗口液・マウスウォッシュ", emoji: "🧴", reduction: 0.3,  desc: "口腔内の酸や汚れを洗い流します" },
+  { id: "fluoride", label: "フッ素（洗口・歯磨き粉）", emoji: "🧪", icon: "shield",     reduction: 0.35, desc: "歯の再石灰化を助け、酸への抵抗力を高めます" },
+  { id: "xylitol",  label: "キシリトールガム",         emoji: "🍬", icon: "gum",        reduction: 0.25, desc: "唾液の分泌を促し、酸を中和する助けになります" },
+  { id: "rinse",    label: "洗口液・マウスウォッシュ", emoji: "🧴", icon: "rinsebottle", reduction: 0.3,  desc: "口腔内の酸や汚れを洗い流します" },
 ];
 
 function getProtectAction(id) {
   return PROTECT_ACTIONS.find((p) => p.id === id);
 }
 
+/* 記録一覧（履歴・グラフ画面）用に、アイコン＋テキストのラベルHTMLを組み立てる */
+function recordLabelHtml(r) {
+  let icon, text;
+  if (r.type === "brush") {
+    icon = iconGlyph("toothbrush", 24);
+    text = "歯磨き・うがい";
+  } else if (r.type === "protect") {
+    const p = getProtectAction(r.protectId);
+    icon = iconGlyph(p ? p.icon : "shield", 24);
+    text = p ? escapeHtml(p.label) : "ケア";
+  } else {
+    const cat = CATEGORY_DEFS[r.category];
+    const mealType = getMealType(r.mealType);
+    icon = iconGlyph(cat.icon, 24);
+    text = `${mealType ? mealType.label + "・" : ""}${escapeHtml(cat.label)}`;
+  }
+  return `<span style="display:flex;align-items:center;gap:8px;">${icon}<span>${text}</span></span>`;
+}
+
 /* 1日の理想的な食事・歯磨きサイクル（あくまで一般的な目安） */
 const SCHEDULE = [
-  { start: 7 * 60,      icon: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう",
+  { start: 7 * 60,      icon: "ricebowl",   label: "朝食",               desc: "1日を規則正しく始めましょう",
     labelChild: "あさごはん", descChild: "1にちの はじまり！げんきに たべよう" },
-  { start: 7 * 60 + 30, icon: "🪥",  label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ",
+  { start: 7 * 60 + 30, icon: "toothbrush", label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ",
     labelChild: "はみがき・うがい", descChild: "たべたあと ちょっと まってから みがこうね" },
-  { start: 8 * 60,      icon: "💧",  label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です",
+  { start: 8 * 60,      icon: "water",      label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です",
     labelChild: "おやつをたべない じかん", descChild: "みずやおちゃは のんでいいよ。おくちが げんきになる じかんだよ" },
-  { start: 12 * 60,     icon: "🍽️", label: "昼食",               desc: "",
+  { start: 12 * 60,     icon: "plate",      label: "昼食",               desc: "",
     labelChild: "ひるごはん", descChild: "" },
-  { start: 12 * 60 + 30,icon: "🪥",  label: "歯磨き・うがい",     desc: "",
+  { start: 12 * 60 + 30,icon: "toothbrush", label: "歯磨き・うがい",     desc: "",
     labelChild: "はみがき・うがい", descChild: "" },
-  { start: 13 * 60,     icon: "💧",  label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて",
+  { start: 13 * 60,     icon: "water",      label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて",
     labelChild: "おやつをたべない じかん", descChild: "あまいものは ごはんのあとに いっしょに たべようね" },
-  { start: 19 * 60,     icon: "🍽️", label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想",
+  { start: 19 * 60,     icon: "plate",      label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想",
     labelChild: "ゆうごはん", descChild: "ねるまえに ゆっくり たべようね" },
-  { start: 19 * 60 + 30,icon: "🪥",  label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります",
+  { start: 19 * 60 + 30,icon: "toothbrush", label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります",
     labelChild: "はみがき（いちばん がんばるとき！）", descChild: "ねているあいだ おくちが むしばきんに ねらわれやすいから、いちばん ていねいに みがこう！" },
-  { start: 20 * 60,     icon: "🌙",  label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です",
+  { start: 20 * 60,     icon: "moon",       label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です",
     labelChild: "ねるまで みずだけタイム", descChild: "このあとは おみずだけ にしようね" },
 ];
 
@@ -603,6 +620,52 @@ function navIcon(name) {
     settings: `<line x1="4" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="12.5" x2="20" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="12.5" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="18" r="2.1" fill="currentColor" stroke="none"/>`,
   };
   return `<svg class="nav-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${icons[name] || ""}</svg>`;
+}
+
+/* ------------------------------------------------------------------ *
+ * アプリ共通アイコンセット。絵文字の代わりに、色付きチップ＋白いシルエットの
+ * 自作アイコンで食品・ケア・バッジ類を統一したビジュアルにする。
+ * ------------------------------------------------------------------ */
+const ICON_DEFS = {
+  candy:      { bg: "#ec4899", glyph: `<rect x="7" y="9" width="10" height="6" rx="3" fill="#fff"/><path d="M7 10.2 3.5 8v8L7 13.8z" fill="#fff"/><path d="M17 10.2 20.5 8v8L17 13.8z" fill="#fff"/>` },
+  chocolate:  { bg: "#78350f", glyph: `<rect x="4" y="7" width="16" height="10" rx="2" fill="#fff"/><path d="M4 12h16M9.3 7v10M14.7 7v10" stroke="rgba(0,0,0,0.22)" stroke-width="1.2"/>` },
+  cookie:     { bg: "#b45309", glyph: `<circle cx="12" cy="12" r="8" fill="#fff"/><circle cx="9" cy="10" r="1.1" fill="rgba(0,0,0,0.3)"/><circle cx="14.5" cy="9.5" r="1" fill="rgba(0,0,0,0.3)"/><circle cx="15" cy="14" r="1.1" fill="rgba(0,0,0,0.3)"/><circle cx="9.5" cy="15" r="0.9" fill="rgba(0,0,0,0.3)"/>` },
+  citrus:     { bg: "#ca8a04", glyph: `<circle cx="12" cy="12" r="8" fill="#fff"/><path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M17.7 6.3 6.3 17.7" stroke="rgba(0,0,0,0.16)" stroke-width="1"/>` },
+  ricebowl:   { bg: "#f59e0b", glyph: `<path d="M4 12a8 8 0 0 0 16 0z" fill="#fff"/><path d="M4 12h16" stroke="rgba(0,0,0,0.2)" stroke-width="1.2"/><ellipse cx="12" cy="8.3" rx="4.2" ry="1.6" fill="#fff"/>` },
+  water:      { bg: "#0ea5e9", glyph: `<path d="M12 3.5c3 4.2 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.8 6-11z" fill="#fff"/>` },
+  plate:      { bg: "#10b981", glyph: `<circle cx="12" cy="12" r="8" fill="#fff"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="1.3"/>` },
+  bread:      { bg: "#d97706", glyph: `<path d="M4 14a8 6.5 0 0 1 16 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" fill="#fff"/><path d="M8 10.5c.6-1.6 1.6-2.5 4-2.5s3.4.9 4 2.5" stroke="rgba(0,0,0,0.18)" stroke-width="1.2" fill="none"/>` },
+  apple:      { bg: "#ef4444", glyph: `<path d="M12 8.2c-1.6-1.8-4.6-1.7-6 .2-1.6 2.2-1.2 6.7 1.4 9.3 1.2 1.2 2.4 1.3 3.1.6.5-.5 1-.5 1.5 0 .7.7 1.9.6 3.1-.6 2.6-2.6 3-7.1 1.4-9.3-1.4-1.9-4.4-2-6-.2z" fill="#fff"/><path d="M12 8.2c0-1.6.6-2.7 1.8-3.4" stroke="rgba(0,0,0,0.25)" stroke-width="1.3" fill="none" stroke-linecap="round"/>` },
+  milk:       { bg: "#38bdf8", glyph: `<path d="M9 4h6l1 3-1 2v9.5A1.5 1.5 0 0 1 13.5 20h-3A1.5 1.5 0 0 1 9 18.5V9L8 7z" fill="#fff"/><path d="M9 11h6" stroke="rgba(0,0,0,0.18)" stroke-width="1.2"/>` },
+  juicebox:   { bg: "#f97316", glyph: `<rect x="6" y="8" width="12" height="12" rx="1.5" fill="#fff"/><path d="M12 8V5.5M12 5.5h2.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M9 13h6" stroke="rgba(0,0,0,0.2)" stroke-width="1.1"/>` },
+  sodacup:    { bg: "#9f1239", glyph: `<path d="M7 8h10l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H9.7a1.5 1.5 0 0 1-1.5-1.3z" fill="#fff"/><path d="M9 5.5h6l-.6 2.5H9.6z" fill="#fff"/><path d="M13.5 5v-2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.4" cy="12.5" r="0.7" fill="rgba(0,0,0,0.22)"/><circle cx="13.6" cy="14.5" r="0.7" fill="rgba(0,0,0,0.22)"/>` },
+  vinegar:    { bg: "#65a30d", glyph: `<path d="M10.5 3h3v3.2l1.8 2.4c.3.4.5.9.5 1.4v8a2 2 0 0 1-2 2h-4.6a2 2 0 0 1-2-2v-8c0-.5.2-1 .5-1.4l1.8-2.4z" fill="#fff"/><path d="M9.5 12h5" stroke="rgba(0,0,0,0.2)" stroke-width="1.2"/>` },
+  fries:      { bg: "#eab308", glyph: `<path d="M7 10v9a1.5 1.5 0 0 0 1.5 1.5h7A1.5 1.5 0 0 0 17 19v-9z" fill="#fff"/><path d="M6.3 10h11.4l-.7-2H7z" fill="#fff"/><path d="M9.5 9.5V6M12 9.5V5.5M14.5 9.5V6.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>` },
+  cake:       { bg: "#db2777", glyph: `<path d="M4 19l8-12 8 12z" fill="#fff"/><circle cx="12" cy="6" r="1.4" fill="#fff"/><path d="M7.5 19l4.5-6.5 4.5 6.5" stroke="rgba(0,0,0,0.2)" stroke-width="1.1" fill="none"/>` },
+  icecream:   { bg: "#f472b6", glyph: `<path d="M8 10h8l-3.3 9.5a1 1 0 0 1-1.9 0z" fill="#fff"/><path d="M8.5 9c0-2.5 1.6-4.5 3.5-4.5s3.5 2 3.5 4.5" fill="#fff"/><path d="M9 11.5h6M9.6 14h4.8" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>` },
+  coffee:     { bg: "#78350f", glyph: `<path d="M5 9h11v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="#fff"/><path d="M16 10.5h1.5a2 2 0 0 1 0 4H16" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M8 6c0-.8.8-1 .8-1.8M11.5 6c0-.8.8-1 .8-1.8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none"/>` },
+  sunrise:    { bg: "#fb923c", glyph: `<circle cx="12" cy="14" r="4" fill="#fff"/><path d="M12 6v2M6.5 14H8M16 14h1.5M7.9 9.9l1.1 1.1M16.1 9.9l-1.1 1.1" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M4 18h16" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>` },
+  sun:        { bg: "#fbbf24", glyph: `<circle cx="12" cy="12" r="4.2" fill="#fff"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.2 6.2l1.6 1.6M16.2 16.2l1.6 1.6M6.2 17.8l1.6-1.6M16.2 7.8l1.6-1.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>` },
+  moon:       { bg: "#6366f1", glyph: `<path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A9 9 0 0 1 15.5 3.5z" fill="#fff"/><circle cx="16.5" cy="7" r="0.9" fill="rgba(0,0,0,0.22)"/><circle cx="18" cy="10.5" r="0.6" fill="rgba(0,0,0,0.22)"/>` },
+  shield:     { bg: "#0d9488", glyph: `<path d="M12 3l7 3v5.5c0 4.6-3 8.3-7 9.5-4-1.2-7-4.9-7-9.5V6z" fill="#fff"/><path d="M9 12l2 2 4-4.5" stroke="rgba(0,0,0,0.3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+  gum:        { bg: "#a855f7", glyph: `<rect x="5" y="8" width="14" height="8" rx="4" fill="#fff"/><path d="M9 12h6" stroke="rgba(0,0,0,0.2)" stroke-width="1.2"/>` },
+  rinsebottle:{ bg: "#06b6d4", glyph: `<path d="M9.5 3h5v3l1.5 2v11a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 8 19V8l1.5-2z" fill="#fff"/><path d="M8.3 13.5c1.2.8 2.4.8 3.7 0s2.5-.8 3.7 0" stroke="rgba(0,0,0,0.22)" stroke-width="1.1" fill="none"/>` },
+  toothbrush: { bg: "#0d9488", glyph: `<rect x="10.3" y="12.5" width="2.4" height="9" rx="1.2" fill="#fff"/><path d="M8 4.5c2-1.6 6-1.6 8 0-.2 3-2 6.5-4 8.3-2-1.8-3.8-5.3-4-8.3z" fill="#fff"/><path d="M8.6 6.2h6.8M8.3 8h7.4M8.8 9.8h6.4" stroke="rgba(0,0,0,0.22)" stroke-width="1"/>` },
+  star:       { bg: "#f59e0b", glyph: `<path d="M12 3.3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6-4.4-4.2 6-.8z" fill="#fff"/>` },
+  flame:      { bg: "#f97316", glyph: `<path d="M12 3c1 3-2 3.5-2 6.5a2 2 0 0 0 4 0c0-1 0-1.5.5-2 1.3 1.3 2.5 3.3 2.5 5.5A5 5 0 0 1 7 13c0-4 3-6 3.5-8.5.4-.8.9-1.2 1.5-1.5z" fill="#fff"/>` },
+  alarmclock: { bg: "#6366f1", glyph: `<circle cx="12" cy="13" r="7" fill="#fff"/><path d="M12 9v4l2.6 1.6" stroke="rgba(0,0,0,0.28)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M5 5l2.6 2M19 5l-2.6 2" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><rect x="10.5" y="2" width="3" height="1.6" rx="0.8" fill="#fff"/>` },
+  celebrate:  { bg: "#f59e0b", glyph: `<path d="M12 3.3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6-4.4-4.2 6-.8z" fill="#fff"/>` },
+  meh:        { bg: "#94a3b8", glyph: `<path d="M12 3.5c3 4.2 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.8 6-11z" fill="#fff"/>` },
+  check:      { bg: "#10b981", glyph: `<path d="M5.5 12.5l4 4 9-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+};
+
+/* iconKeyに対応する色付きチップ＋白いシルエットのSVGアイコンを返す */
+function iconGlyph(iconKey, size) {
+  const s = size || 28;
+  const def = ICON_DEFS[iconKey];
+  if (!def) return "";
+  const inner = Math.round(s * 0.62);
+  return `<span class="icon-chip" style="background:${def.bg};width:${s}px;height:${s}px;"><svg viewBox="0 0 24 24" width="${inner}" height="${inner}" aria-hidden="true">${def.glyph}</svg></span>`;
 }
 
 function renderMascotSvg(zoneKey, size) {
@@ -914,7 +977,7 @@ function renderCycleScreen() {
     return `
     <div class="timeline-item ${i === curIdx ? "current" : ""}">
       <div class="timeline-time">${minutesToLabel(s.start)}</div>
-      <div class="timeline-icon" aria-hidden="true">${s.icon}</div>
+      <div class="timeline-icon" aria-hidden="true">${iconGlyph(s.icon, 34)}</div>
       <div class="timeline-body">
         <div class="timeline-title">${label}${i === curIdx ? `<span class="now-tag">${isChild ? "いまのじかん" : "今の時間帯"}</span>` : ""}</div>
         ${desc ? `<div class="timeline-desc">${desc}</div>` : ""}
@@ -1040,7 +1103,7 @@ function renderWeekStampCard(records) {
   const days = computeWeekStamps(records, state.now);
   const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
   const cells = days.map((d) => {
-    const icon = d.status === "good" ? "⭐" : d.status === "bad" ? "💧" : d.status === "today" ? "・" : "";
+    const icon = d.status === "good" ? iconGlyph("star", 24) : d.status === "bad" ? iconGlyph("meh", 24) : d.status === "today" ? "・" : "";
     return `
       <div class="stamp-cell ${d.status}">
         <div class="stamp-icon" aria-hidden="true">${icon}</div>
@@ -1052,7 +1115,10 @@ function renderWeekStampCard(records) {
     <div class="card">
       <p class="label-sm" style="margin:0 0 10px;">今週のスタンプカード</p>
       <div class="stamp-row">${cells}</div>
-      <p style="margin:10px 0 0;font-size:0.6875rem;color:var(--slate-500);">⭐ 危険域が目安以下だった日 ／ 💧 もう少しだった日</p>
+      <p style="margin:10px 0 0;font-size:0.6875rem;color:var(--slate-500);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;gap:4px;">${iconGlyph("star", 16)} 危険域が目安以下だった日</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">${iconGlyph("meh", 16)} もう少しだった日</span>
+      </p>
     </div>
   `;
 }
@@ -1171,18 +1237,7 @@ function renderHistoryScreen() {
       <div class="day-detail">
         <ul class="record-list">
           ${dayRecords.map((r) => {
-            let label;
-            if (r.type === "brush") {
-              label = "🪥 歯磨き・うがい";
-            } else if (r.type === "protect") {
-              const p = getProtectAction(r.protectId);
-              label = p ? `${p.emoji} ${escapeHtml(p.label)}` : "🧪 ケア";
-            } else {
-              const cat = CATEGORY_DEFS[r.category];
-              const mealType = getMealType(r.mealType);
-              label = `${mealType ? mealType.emoji + mealType.label + "・" : ""}${cat.emoji} ${escapeHtml(cat.label)}`;
-            }
-            return `<li><span>${label}</span><span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+            return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
           }).join("")}
         </ul>
       </div>
@@ -1211,7 +1266,7 @@ function renderHistoryScreen() {
 
       ${currentStreak > 0 ? `
         <div class="card" style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.625rem;" aria-hidden="true">🔥</span>
+          ${iconGlyph("flame", 34)}
           <div>
             <p style="margin:0;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">危険な状態が少ない日が ${currentStreak}日連続！</p>
             <p style="margin:2px 0 0;font-size:0.6875rem;color:var(--slate-500);">最長記録: ${longestStreak}日</p>
@@ -1498,10 +1553,10 @@ function maybeFireBrowserNotification() {
 
 /* 「今日できたこと」チェックリスト。時間帯ベースの簡易判定で、朝・昼・夜の歯磨きと間食の頻度を見る */
 const CHECKLIST_ITEMS = [
-  { id: "morning_brush", label: "朝の歯磨き", labelChild: "あさのはみがき", icon: "🌅", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
-  { id: "midday_brush",  label: "昼の歯磨き", labelChild: "ひるのはみがき", icon: "☀️", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
-  { id: "night_brush",   label: "夜の仕上げ磨き", labelChild: "よるのはみがき", icon: "🌙", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
-  { id: "snack_limit",   label: "間食は2回まで", labelChild: "おやつは2かいまで", icon: "🍪", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
+  { id: "morning_brush", label: "朝の歯磨き", labelChild: "あさのはみがき", icon: "sunrise", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
+  { id: "midday_brush",  label: "昼の歯磨き", labelChild: "ひるのはみがき", icon: "sun", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
+  { id: "night_brush",   label: "夜の仕上げ磨き", labelChild: "よるのはみがき", icon: "moon", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
+  { id: "snack_limit",   label: "間食は2回まで", labelChild: "おやつは2かいまで", icon: "cookie", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
 ];
 
 function renderTodayChecklist(records) {
@@ -1510,7 +1565,7 @@ function renderTodayChecklist(records) {
     const done = item.check(records);
     return `
       <div class="checklist-item ${done ? "done" : ""}">
-        <span class="checklist-icon" aria-hidden="true">${done ? "✅" : item.icon}</span>
+        <span class="checklist-icon" aria-hidden="true">${iconGlyph(done ? "check" : item.icon, 24)}</span>
         <span class="checklist-label">${isChild ? item.labelChild : item.label}</span>
       </div>
     `;
@@ -1534,7 +1589,7 @@ function renderHome() {
 
   const cooldown = brushCooldownRemainMs();
   const brushDisabled = cooldown > 0;
-  const brushLabel = brushDisabled ? "🪥 歯磨き済み" : "🪥 歯磨きした";
+  const brushLabel = `${iconGlyph("toothbrush", 22)} ${brushDisabled ? "歯磨き済み" : "歯磨きした"}`;
 
   const dangerMinToday = todayDangerMinutes();
   const myRecords = activeProfileRecords();
@@ -1591,7 +1646,7 @@ function renderHome() {
 
       ${streak > 0 ? `
         <div class="card" style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.625rem;" aria-hidden="true">🔥</span>
+          ${iconGlyph("flame", 34)}
           <div>
             <p style="margin:0;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">危険な状態が少ない日が ${streak}日連続！</p>
             <p style="margin:2px 0 0;font-size:0.6875rem;color:var(--slate-500);">このまま続けていきましょう</p>
@@ -1603,7 +1658,7 @@ function renderHome() {
 
       ${favorites.length ? `
         <div class="card">
-          <p class="label-sm" style="margin:0 0 8px;">⭐ よく使う組み合わせ</p>
+          <p class="label-sm" style="margin:0 0 8px;display:flex;align-items:center;gap:6px;">${iconGlyph("star", 20)} よく使う組み合わせ</p>
           <div class="favorites-row">
             ${favorites.map((f) => `
               <div class="favorite-chip">
@@ -1617,19 +1672,19 @@ function renderHome() {
 
       ${shouldShowBrushReminder() ? `
         <div class="card reminder-card">
-          <span style="font-size:1.5rem;" aria-hidden="true">⏰</span>
+          ${iconGlyph("alarmclock", 32)}
           <div style="flex:1;">
             <p style="margin:0;font-size:0.875rem;font-weight:800;color:var(--slate-800);">そろそろ仕上げ磨きの時間です</p>
             <p style="margin:2px 0 0;font-size:0.75rem;color:var(--slate-500);">${state.reminderTime}を目安に設定しています（設定でいつでも変更できます）</p>
           </div>
-          <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">🪥</button>
+          <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">${iconGlyph("toothbrush", 26)}</button>
         </div>
       ` : ""}
 
       <div class="btn-stack">
-        <button class="cta-btn" data-action="open-modal">🍽️ 食べた／飲んだを記録する</button>
+        <button class="cta-btn" data-action="open-modal">${iconGlyph("plate", 22)} 食べた／飲んだを記録する</button>
         <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
-        <button class="secondary-btn" data-action="open-protect-modal">🧪 歯を守るケアを記録</button>
+        <button class="secondary-btn" data-action="open-protect-modal">${iconGlyph("shield", 22)} 歯を守るケアを記録</button>
       </div>
     </div>
   `;
@@ -1639,19 +1694,7 @@ function renderGraph() {
   const records = todayRecords();
   const advice = generateAdvice(records, state.now);
   const listItems = records.map((r) => {
-    let label;
-    if (r.type === "brush") {
-      label = "🪥 歯磨き・うがい";
-    } else if (r.type === "protect") {
-      const p = getProtectAction(r.protectId);
-      label = p ? `${p.emoji} ${escapeHtml(p.label)}` : "🧪 ケア";
-    } else {
-      const cat = CATEGORY_DEFS[r.category];
-      const mealType = getMealType(r.mealType);
-      const mealPrefix = mealType ? `${mealType.emoji}${mealType.label}・` : "";
-      label = `${mealPrefix}${cat.emoji} ${escapeHtml(cat.label)}`;
-    }
-    return `<li><span>${label}</span><span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+    return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
   }).join("");
 
   return `
@@ -1684,14 +1727,14 @@ function renderGraph() {
 function renderLevelCards(selectedLevel, action) {
   return DETAIL_LEVELS.map((d) => {
     const selected = d.level === selectedLevel;
-    const emojis = d.ids.map((id) => CATEGORY_DEFS[id].emoji).join(" ");
+    const icons = d.ids.map((id) => iconGlyph(CATEGORY_DEFS[id].icon, 20)).join("");
     return `
       <button class="level-card ${selected ? "selected" : ""}" data-action="${action}" data-level="${d.level}" aria-pressed="${selected}">
         <div class="level-card-head">
           <span class="level-card-title">Lv.${d.level}　${d.name}（${d.ids.length}種類）</span>
           ${selected ? '<span class="level-check">✓</span>' : ""}
         </div>
-        <div class="level-card-emojis">${emojis}</div>
+        <div class="level-card-emojis">${icons}</div>
       </button>
     `;
   }).join("");
@@ -1852,7 +1895,7 @@ function renderSettingsScreen() {
 function renderMealTypeStep() {
   const buttons = MEAL_TYPES.map((m) => `
     <button class="cat-btn" data-action="select-meal-type" data-mealtype="${m.id}">
-      <span class="cat-emoji">${m.emoji}</span>
+      ${iconGlyph(m.icon, 40)}
       <span class="cat-label">${m.label}</span>
     </button>
   `).join("");
@@ -1873,7 +1916,7 @@ function renderCategoryStep() {
     return `
     <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-category" data-category="${c.id}" aria-pressed="${selected}">
       ${selected ? '<span class="cat-check">✓</span>' : ""}
-      <span class="cat-emoji">${c.emoji}</span>
+      ${iconGlyph(c.icon, 40)}
       <span class="cat-label">${escapeHtml(c.label)}</span>
       <span class="cat-desc">${escapeHtml(c.desc)}</span>
     </button>
@@ -1887,7 +1930,7 @@ function renderCategoryStep() {
 
   return `
     <div class="modal-head">
-      <h2>${mealType ? `${mealType.emoji} ${mealType.label}` : "何を食べた／飲んだ？"}</h2>
+      <h2 style="display:flex;align-items:center;gap:8px;">${mealType ? `${iconGlyph(mealType.icon, 26)} ${mealType.label}` : "何を食べた／飲んだ？"}</h2>
       <button class="modal-close" data-action="close-modal" aria-label="閉じる">×</button>
     </div>
     <button class="back-link" data-action="back-to-mealtype">← 時間帯を選びなおす</button>
@@ -1920,7 +1963,7 @@ function renderProtectModal() {
     return `
     <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-protect" data-protect="${p.id}" aria-pressed="${selected}">
       ${selected ? '<span class="cat-check">✓</span>' : ""}
-      <span class="cat-emoji">${p.emoji}</span>
+      ${iconGlyph(p.icon, 40)}
       <span class="cat-label">${escapeHtml(p.label)}</span>
       <span class="cat-desc">${escapeHtml(p.desc)}</span>
     </button>
@@ -2088,7 +2131,7 @@ function renderDailyFeedbackModal() {
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div class="card" style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.75rem;" aria-hidden="true">${f.achieved ? "🎉" : "💧"}</span>
+            ${f.achieved ? iconGlyph("celebrate", 40) : iconGlyph("meh", 40)}
             <div>
               <p style="margin:0;font-size:0.9375rem;font-weight:800;color:var(--slate-800);">
                 危険域にいた時間: ${f.dangerMin}分（目安${GOOD_DAY_MAX_DANGER_MIN}分以下）
@@ -2212,7 +2255,7 @@ document.addEventListener("click", (e) => {
       if (mine.some((f) => f.key === key)) return;
       if (mine.length >= 8) return;
       const mealType = getMealType(state.selectedMealType);
-      const label = `${mealType ? mealType.emoji : ""}${state.selectedCategories.map((id) => CATEGORY_DEFS[id].emoji).join("")}`;
+      const label = `<span style="display:inline-flex;align-items:center;gap:2px;">${mealType ? iconGlyph(mealType.icon, 18) : ""}${state.selectedCategories.map((id) => iconGlyph(CATEGORY_DEFS[id].icon, 18)).join("")}</span>`;
       state.favorites.push({ id: Date.now() + Math.random(), key, profileId: state.activeProfileId, mealType: state.selectedMealType, categories: state.selectedCategories.slice(), label });
       saveFavorites();
       render();
