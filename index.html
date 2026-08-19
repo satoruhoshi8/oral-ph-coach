@@ -125,7 +125,8 @@
   .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
   .header h1 { margin: 0; font-size:1.25rem; font-weight: 800; color: var(--slate-800); }
   .header p { margin: 2px 0 0; font-size:0.75rem; color: var(--slate-400); }
-  .settings-btn { background: none; border: none; font-size:1.25rem; padding: 4px; color: var(--slate-500); flex-shrink: 0; }
+  .settings-btn { background: none; border: none; padding: 6px; color: var(--slate-500); flex-shrink: 0; display: flex; }
+  .nav-icon-svg { display: block; }
   .main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
   .screen { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
 
@@ -191,7 +192,7 @@
   .disclaimer { font-size:0.625rem; line-height: 1.6; color: var(--slate-400); text-align: center; padding: 8px 16px; background: var(--slate-50); border-top: 1px solid var(--slate-200); }
 
   .nav { display: flex; border-bottom: 1px solid var(--slate-200); background: var(--card-bg); }
-  .nav button { flex: 1; padding: 10px 2px; background: none; border: none; font-size:0.6875rem; font-weight: 700; color: var(--slate-400); }
+  .nav button { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 9px 2px; background: none; border: none; font-size:0.625rem; font-weight: 700; color: var(--slate-400); }
   .nav button.active { color: var(--teal); box-shadow: inset 0 -2px 0 var(--teal); }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
@@ -234,6 +235,16 @@
   .timeline-item.current .timeline-title { color: var(--teal-dark); }
   .timeline-desc { font-size:0.75rem; color: var(--slate-500); margin-top: 2px; line-height: 1.4; }
   .now-tag { font-size:0.625rem; font-weight: 700; color: #fff; background: var(--teal); padding: 1px 8px; border-radius: 999px; }
+
+  .help-list { display: flex; flex-direction: column; }
+  .help-item { border-bottom: 1px solid var(--slate-100); }
+  .help-item:last-child { border-bottom: none; }
+  .help-question { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 2px; background: none; border: none; text-align: left; }
+  .help-icon { font-size:1.125rem; flex-shrink: 0; }
+  .help-question-text { flex: 1; font-size:0.8125rem; font-weight: 700; color: var(--slate-800); line-height: 1.5; }
+  .help-chevron { font-size:0.6875rem; color: var(--slate-400); flex-shrink: 0; }
+  .help-item.open .help-question-text { color: var(--teal-dark); }
+  .help-answer { margin: 0 2px 14px; font-size:0.78125rem; color: var(--slate-600); line-height: 1.7; }
 
   .history-summary { font-size:0.8125rem; color: var(--slate-600); line-height: 1.7; }
   .month-header { font-size:0.8125rem; font-weight: 800; color: var(--slate-500); margin: 4px 0 2px; padding-top: 10px; }
@@ -382,15 +393,100 @@ function getProtectAction(id) {
 
 /* 1日の理想的な食事・歯磨きサイクル（あくまで一般的な目安） */
 const SCHEDULE = [
-  { start: 7 * 60,      icon: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう" },
-  { start: 7 * 60 + 30, icon: "🪥",  label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ" },
-  { start: 8 * 60,      icon: "💧",  label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です" },
-  { start: 12 * 60,     icon: "🍽️", label: "昼食",               desc: "" },
-  { start: 12 * 60 + 30,icon: "🪥",  label: "歯磨き・うがい",     desc: "" },
-  { start: 13 * 60,     icon: "💧",  label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて" },
-  { start: 19 * 60,     icon: "🍽️", label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想" },
-  { start: 19 * 60 + 30,icon: "🪥",  label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります" },
-  { start: 20 * 60,     icon: "🌙",  label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です" },
+  { start: 7 * 60,      icon: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう",
+    labelChild: "あさごはん", descChild: "1にちの はじまり！げんきに たべよう" },
+  { start: 7 * 60 + 30, icon: "🪥",  label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ",
+    labelChild: "はみがき・うがい", descChild: "たべたあと ちょっと まってから みがこうね" },
+  { start: 8 * 60,      icon: "💧",  label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です",
+    labelChild: "おやつをたべない じかん", descChild: "みずやおちゃは のんでいいよ。おくちが げんきになる じかんだよ" },
+  { start: 12 * 60,     icon: "🍽️", label: "昼食",               desc: "",
+    labelChild: "ひるごはん", descChild: "" },
+  { start: 12 * 60 + 30,icon: "🪥",  label: "歯磨き・うがい",     desc: "",
+    labelChild: "はみがき・うがい", descChild: "" },
+  { start: 13 * 60,     icon: "💧",  label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて",
+    labelChild: "おやつをたべない じかん", descChild: "あまいものは ごはんのあとに いっしょに たべようね" },
+  { start: 19 * 60,     icon: "🍽️", label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想",
+    labelChild: "ゆうごはん", descChild: "ねるまえに ゆっくり たべようね" },
+  { start: 19 * 60 + 30,icon: "🪥",  label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります",
+    labelChild: "はみがき（いちばん がんばるとき！）", descChild: "ねているあいだ おくちが むしばきんに ねらわれやすいから、いちばん ていねいに みがこう！" },
+  { start: 20 * 60,     icon: "🌙",  label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です",
+    labelChild: "ねるまで みずだけタイム", descChild: "このあとは おみずだけ にしようね" },
+];
+
+/* ヘルプ／用語集画面のQ&Aデータ。専門知識がない人向けに、気になる項目だけタップして読めるようにする */
+const HELP_TOPICS = [
+  {
+    id: "stephan-curve",
+    icon: "📉",
+    question: "「ステファンカーブ」って何？",
+    questionChild: "グラフのせんは なにをあらわしてるの？",
+    answer: "食べ物や飲み物を口にすると、お口の中は一時的に酸性に傾き、その後だ液の働きで少しずつ中性に戻っていきます。この「酸性に傾いてから回復するまで」の変化を表したグラフを、提唱した学者の名前から「ステファンカーブ」と呼びます。このアプリは、記録した内容からこの変化を再現（シミュレーション）して表示しています。",
+    answerChild: "たべたり のんだり すると、おくちの なかは いっとき すっぱく（さんせい）なるよ。そのあと つばの ちからで、また もとの じょうたいに もどっていくんだ。そのようすを グラフに したものだよ。",
+  },
+  {
+    id: "ph",
+    icon: "🧪",
+    question: "「pH」って何？",
+    questionChild: "「ピーエイチ」ってなに？",
+    answer: "pH（ピーエイチ）は、酸性・中性・アルカリ性の度合いを表す数値です。数字が小さいほど酸性が強く、7.0が中性です。お口の中のpHが下がりすぎる（酸性に傾きすぎる）と、歯の表面が溶けやすくなります。",
+    answerChild: "すっぱさの つよさを あらわす すうじだよ。すうじが ちいさいほど すっぱくて、7.0くらいが ふつうの じょうたいだよ。",
+  },
+  {
+    id: "zones",
+    icon: "🚦",
+    question: "「安全」「注意」「危険」の違いは？",
+    questionChild: "みどり・きいろ・むらさきの ちがいは？",
+    answer: "アプリでは口腔内pHの状態を3段階の目安に分けています。安全域（中性に近い）は歯が安定した状態、注意域はやや酸性に傾いてきた状態、危険域（pH5.5未満が目安）は歯の表面が溶け始めやすい状態です。あくまで一般的な目安であり、個人差があります。",
+    answerChild: "おくちの なかの じょうたいを 3つに わけて おしえてくれるよ。みどりは あんしん、きいろは ちょっとちゅうい、むらさき（きけん）は はが とけやすい じょうたいだよ。",
+  },
+  {
+    id: "demineral",
+    icon: "🔻",
+    question: "「脱灰（だっかい）」「再石灰化（さいせっかいか）」って何？",
+    questionChild: "「はがとける」「はがなおる」ってどういうこと？",
+    answer: "脱灰とは、口の中が酸性に傾いたときに歯の表面のミネラル（カルシウムなど）が溶け出すことです。再石灰化とは、だ液の力でそのミネラルが再び歯に戻り、表面が修復されることです。この2つが1日の中で繰り返されており、脱灰の時間が長すぎるとむし歯につながります。",
+    answerChild: "おくちが すっぱくなると、はの ひょうめんが すこしずつ とけちゃうんだ（だっかい）。でも つばの ちからで、とけたぶんは また もとに もどるよ（さいせっかいか）。とける じかんが ながすぎると、むしばに なりやすいんだ。",
+  },
+  {
+    id: "why-simulation",
+    icon: "🔬",
+    question: "なぜ「実測値」ではなく「シミュレーション」なの？",
+    questionChild: "なんで きかいで はからないの？",
+    answer: "実際の口腔内pHを正確に測るには専用の測定器が必要で、家庭で日常的に測るのは現実的ではありません。このアプリは、食事・歯磨きなどの記録内容から、一般的な研究知見（ステファンカーブ）に基づいてpHの変化を推定・可視化する教育用シミュレーションです。実際の値とは異なる場合があるため、むし歯や歯周病が気になる場合は歯科医院にご相談ください。",
+    answerChild: "ほんとうの おくちの すっぱさを はかるには、とくべつな きかいが いるんだ。このアプリは、きろくした ないようから 「たぶんこうなるかな」を けいさんして みせているよ。",
+  },
+  {
+    id: "protect-actions",
+    icon: "🛡️",
+    question: "フッ素・キシリトール・洗口液は何のため？",
+    questionChild: "フッ素とか キシリトールって なにに つかうの？",
+    answer: "これらは歯磨き以外で歯を酸から守る補助的なケアです。フッ素は歯の再石灰化を助けて酸への抵抗力を高め、キシリトールガムは唾液の分泌を促して酸を中和しやすくし、洗口液は口の中の酸や汚れを洗い流します。歯磨きの代わりではなく、あわせて行うことでより効果的です。",
+    answerChild: "はみがきの ほかに、はを まもってくれる アイテムだよ。フッ素は はを つよくして、ガムは つばを たくさん だしてくれて、うがいぐすりは おくちの なかを きれいに してくれるよ。はみがきと いっしょに つかうと もっと いいよ。",
+  },
+  {
+    id: "saliva",
+    icon: "💧",
+    question: "だ液（つば）にはどんな役割があるの？",
+    questionChild: "つばには どんな はたらきが あるの？",
+    answer: "だ液には、口の中の酸を中和して中性に戻す働きと、溶け出したミネラルを歯に戻す（再石灰化を助ける）働きがあります。だらだらと長時間食べ続けると、だ液が酸性を中和しきれず、脱灰の時間が長くなってしまいます。",
+    answerChild: "つばには、おくちの すっぱさを もとに もどしたり、とけた はを なおしたり する ちからが あるよ。だらだら たべつづけると、つばの ちからが おいつかなくなっちゃうんだ。",
+  },
+  {
+    id: "snack-frequency",
+    icon: "🍪",
+    question: "おやつの回数と虫歯にはどんな関係があるの？",
+    questionChild: "おやつを なんかいも たべると どうなるの？",
+    answer: "食べる回数が多いほど、口の中が酸性になる時間の合計が長くなります。量よりも「回数」や「だらだら食べ」が虫歯リスクに大きく影響するため、間食は時間を決めてまとめて摂るのがおすすめです。",
+    answerChild: "なんかいも たべると、おくちが すっぱい じかんが ながくなっちゃうよ。りょうより 「なんかい たべるか」が だいじだから、おやつの じかんを きめて たべようね。",
+  },
+  {
+    id: "night-brush",
+    icon: "🌙",
+    question: "寝る前の歯磨きが一番大事といわれるのはなぜ？",
+    questionChild: "なんで ねるまえの はみがきが いちばん だいじなの？",
+    answer: "就寝中はだ液の分泌量が大きく減るため、日中に比べて口の中が酸性から回復しにくく、脱灰が進みやすい時間帯です。寝る前に食べかすや汚れをしっかり落としておくことが、むし歯予防にとって特に重要とされています。",
+    answerChild: "ねている あいだは つばが すくなくなるから、おくちが すっぱいままに なりやすいんだ。だから ねるまえに しっかり はみがきするのが、いちばん だいじなんだよ。",
+  },
 ];
 
 const BASELINE = 7.0;
@@ -494,6 +590,19 @@ function getPhExplanation(zone) {
         helps: "歯の表面が柔らかくなっているため強くこすらず、まず水やお茶でゆすぎましょう。今「🪥歯磨きした」やフッ素などのケアを記録すると、酸の影響を大きく減らせます。",
       };
   }
+}
+
+/* ナビゲーションや設定ボタン用のラインアイコン。currentColorで塗るのでボタンのcolorに自動追従する */
+function navIcon(name) {
+  const icons = {
+    home: `<path d="M4 11.5 12 4.5l8 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.2v8.3a1 1 0 0 0 1 1h3.5v-5h3v5H17a1 1 0 0 0 1-1v-8.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    graph: `<path d="M3 15.5c2-5 4-5 6 0s4 5 6 0 4-5 6 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    cycle: `<circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.6v4.6l3 1.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
+    history: `<rect x="4" y="5.5" width="16" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.6v3.6M16 3.6v3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+    help: `<circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.5 2.3c-.9.5-1.3 1-1.3 2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="17.1" r="1" fill="currentColor" stroke="none"/>`,
+    settings: `<line x1="4" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="12.5" x2="20" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="12.5" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="18" r="2.1" fill="currentColor" stroke="none"/>`,
+  };
+  return `<svg class="nav-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${icons[name] || ""}</svg>`;
 }
 
 function renderMascotSvg(zoneKey, size) {
@@ -796,24 +905,31 @@ function minutesToLabel(min) {
 }
 
 function renderCycleScreen() {
+  const isChild = activeAgeGroup() === "child";
   const nowMin = currentMinutesOfDay(state.now);
   const curIdx = findCurrentScheduleIndex(nowMin);
-  const items = SCHEDULE.map((s, i) => `
+  const items = SCHEDULE.map((s, i) => {
+    const label = isChild ? s.labelChild : s.label;
+    const desc = isChild ? s.descChild : s.desc;
+    return `
     <div class="timeline-item ${i === curIdx ? "current" : ""}">
       <div class="timeline-time">${minutesToLabel(s.start)}</div>
       <div class="timeline-icon" aria-hidden="true">${s.icon}</div>
       <div class="timeline-body">
-        <div class="timeline-title">${s.label}${i === curIdx ? '<span class="now-tag">今の時間帯</span>' : ""}</div>
-        ${s.desc ? `<div class="timeline-desc">${s.desc}</div>` : ""}
+        <div class="timeline-title">${label}${i === curIdx ? `<span class="now-tag">${isChild ? "いまのじかん" : "今の時間帯"}</span>` : ""}</div>
+        ${desc ? `<div class="timeline-desc">${desc}</div>` : ""}
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   return `
     <div class="screen">
-      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">理想の食事・歯磨きサイクル</h2>
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">${isChild ? "たべる・はみがきの じゅんばん" : "理想の食事・歯磨きサイクル"}</h2>
       <p style="margin:0;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
-        むし歯予防の基本は、食事の回数を決めて口の中が酸性になる時間を作りすぎないこと、そして食後の歯磨きで区切りをつけることです。以下はあくまで目安の1日の例です。ご自身の生活リズムに合わせて調整してください。
+        ${isChild
+          ? "むしばきんは、なんども たべたり のんだり すると げんきになっちゃうよ。じかんを きめて たべて、たべたあとは はみがきで バイバイしよう！ したの ひょうは いちにちの めやすだよ。"
+          : "むし歯予防の基本は、食事の回数を決めて口の中が酸性になる時間を作りすぎないこと、そして食後の歯磨きで区切りをつけることです。以下はあくまで目安の1日の例です。ご自身の生活リズムに合わせて調整してください。"}
       </p>
       <div class="card">${items}</div>
     </div>
@@ -1294,6 +1410,7 @@ const state = {
   dailyFeedback: null,
   celebrate: null,
   showPhDetail: false,
+  openHelpTopics: [],
   now: Date.now(),
 };
 if (state.notifyEnabled && (typeof Notification === "undefined" || Notification.permission !== "granted")) {
@@ -1437,10 +1554,12 @@ function renderHome() {
           ${renderMascotSvg(zone.key, 84)}
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
-        <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
-          ${state.showPhDetail ? (isChild ? "とじる ▲" : "くわしく見る ▲") : (isChild ? "もっとみる ▾" : "もっと見る ▾")}
-        </button>
-        ${state.showPhDetail ? `
+        ${isChild ? `
+          <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
+            ${state.showPhDetail ? "とじる ▲" : "もっとみる ▾"}
+          </button>
+        ` : ""}
+        ${(isChild ? state.showPhDetail : true) ? `
           <div class="ph-detail">
             <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
             <div class="gauge-track" aria-hidden="true">
@@ -1664,6 +1783,40 @@ function renderReminderSettings() {
       <p style="margin:8px 0 0;font-size:0.6875rem;color:var(--slate-500);line-height:1.6;">
         このアプリのタブ（または裏で開いているウィンドウ）が生きている間だけ通知が届きます。アプリを完全に閉じている間は届きません。
       </p>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * ヘルプ画面（用語集）
+ * ------------------------------------------------------------------ */
+function renderHelpScreen() {
+  const isChild = activeAgeGroup() === "child";
+  const items = HELP_TOPICS.map((t) => {
+    const open = state.openHelpTopics.includes(t.id);
+    const question = isChild ? t.questionChild : t.question;
+    const answer = isChild ? t.answerChild : t.answer;
+    return `
+      <div class="help-item ${open ? "open" : ""}">
+        <button class="help-question" data-action="toggle-help-topic" data-topicid="${t.id}" aria-expanded="${open}">
+          <span class="help-icon" aria-hidden="true">${t.icon}</span>
+          <span class="help-question-text">${question}</span>
+          <span class="help-chevron" aria-hidden="true">${open ? "▲" : "▾"}</span>
+        </button>
+        ${open ? `<p class="help-answer">${answer}</p>` : ""}
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="screen">
+      <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">${isChild ? "きになることを しらべよう" : "用語集・よくある疑問"}</h2>
+      <p style="margin:0;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
+        ${isChild
+          ? "きになる もんだいを タップすると、こたえが よめるよ。"
+          : "気になる項目をタップすると説明が開きます。アプリ内で使われている言葉や、シミュレーションの考え方について解説しています。"}
+      </p>
+      <div class="card help-list">${items}</div>
     </div>
   `;
 }
@@ -1961,7 +2114,7 @@ function render() {
     root.innerHTML = renderOnboarding();
     return;
   }
-  const screens = { home: renderHome, graph: renderGraph, cycle: renderCycleScreen, history: renderHistoryScreen, settings: renderSettingsScreen };
+  const screens = { home: renderHome, graph: renderGraph, cycle: renderCycleScreen, history: renderHistoryScreen, help: renderHelpScreen, settings: renderSettingsScreen };
   root.innerHTML = `
     ${state.celebrate ? `<div class="celebrate-toast">${state.celebrate.emoji} ${escapeHtml(state.celebrate.text)}</div>` : ""}
     <div class="app">
@@ -1980,15 +2133,16 @@ function render() {
             <h1>Oral pH Coach</h1>
             <p>口腔内pHシミュレーション（プロトタイプ）</p>
           </div>
-          <button class="settings-btn" data-action="go-settings" aria-label="設定">⚙️</button>
+          <button class="settings-btn" data-action="go-settings" aria-label="設定">${navIcon("settings")}</button>
         </div>
       </div>
       ${renderProfileSwitcher()}
       <div class="nav">
-        <button class="${state.screen === "home" ? "active" : ""}" data-action="go-home" aria-current="${state.screen === "home" ? "page" : "false"}">🏠 ホーム</button>
-        <button class="${state.screen === "graph" ? "active" : ""}" data-action="go-graph" aria-current="${state.screen === "graph" ? "page" : "false"}">📈 グラフ</button>
-        <button class="${state.screen === "cycle" ? "active" : ""}" data-action="go-cycle" aria-current="${state.screen === "cycle" ? "page" : "false"}">🕒 サイクル</button>
-        <button class="${state.screen === "history" ? "active" : ""}" data-action="go-history" aria-current="${state.screen === "history" ? "page" : "false"}">📅 履歴</button>
+        <button class="${state.screen === "home" ? "active" : ""}" data-action="go-home" aria-current="${state.screen === "home" ? "page" : "false"}">${navIcon("home")}<span>ホーム</span></button>
+        <button class="${state.screen === "graph" ? "active" : ""}" data-action="go-graph" aria-current="${state.screen === "graph" ? "page" : "false"}">${navIcon("graph")}<span>グラフ</span></button>
+        <button class="${state.screen === "cycle" ? "active" : ""}" data-action="go-cycle" aria-current="${state.screen === "cycle" ? "page" : "false"}">${navIcon("cycle")}<span>サイクル</span></button>
+        <button class="${state.screen === "history" ? "active" : ""}" data-action="go-history" aria-current="${state.screen === "history" ? "page" : "false"}">${navIcon("history")}<span>履歴</span></button>
+        <button class="${state.screen === "help" ? "active" : ""}" data-action="go-help" aria-current="${state.screen === "help" ? "page" : "false"}">${navIcon("help")}<span>ヘルプ</span></button>
       </div>
       <div class="main">${screens[state.screen]()}</div>
       <p class="disclaimer">※このグラフは一般的な研究知見（ステファンカーブ）に基づく目安のシミュレーションであり、実測値ではありません。虫歯や歯周病が気になる場合は歯科医院にご相談ください。</p>
@@ -2163,6 +2317,18 @@ document.addEventListener("click", (e) => {
       state.screen = "settings";
       render();
       break;
+    case "go-help":
+      state.screen = "help";
+      render();
+      break;
+    case "toggle-help-topic": {
+      const topicId = el.dataset.topicid;
+      const idx = state.openHelpTopics.indexOf(topicId);
+      if (idx === -1) state.openHelpTopics.push(topicId);
+      else state.openHelpTopics.splice(idx, 1);
+      render();
+      break;
+    }
     case "set-detail-level":
       state.detailLevel = Number(el.dataset.level);
       saveSettings();
