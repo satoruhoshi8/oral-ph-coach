@@ -442,7 +442,37 @@ function getZone(ph) {
   return { key: "danger", label: "危険域（脱灰リスク）" };
 }
 
+/* 選択中プロフィールのタイプ（"child"／"adult"）。文章のトーン・詳しさの出し分けに使う */
+function activeAgeGroup() {
+  const p = state.profiles.find((pr) => pr.id === state.activeProfileId);
+  return p && p.ageGroup === "child" ? "child" : "adult";
+}
+
+function getPhExplanationChild(zone) {
+  switch (zone.key) {
+    case "safe":
+      return {
+        status: "おくちのなか、いまげんきだよ！ばいきんもおとなしいみたい。",
+        worsens: "ここであまいものをたべると、またばいきんがげんきになっちゃうよ。",
+        helps: "なにもしなくてもだいじょうぶ。つぎのおやつまでじかんをあけると、もっといいよ。",
+      };
+    case "caution":
+      return {
+        status: "はのおもてが、ちょっとよわくなってきたよ。ばいきんとつばの、たたかいちゅう！",
+        worsens: "ここでまた、あまい・すっぱいものをたべると、ばいきんがげんきになっちゃうよ。",
+        helps: "おみずやおちゃで、おくちをゆすいでみよう！つばのちからで、もとにもどるよ。",
+      };
+    default:
+      return {
+        status: "ばいきんが、げんきいっぱいになってるよ！はがとけちゃうかも…！",
+        worsens: "ここでもっとたべると、はがとけるじかんが、ながくなっちゃうよ。",
+        helps: "いま「はみがきした」をおすと、ばいきんをやっつけられるよ！",
+      };
+  }
+}
+
 function getPhExplanation(zone) {
+  if (activeAgeGroup() === "child") return getPhExplanationChild(zone);
   switch (zone.key) {
     case "safe":
       return {
@@ -510,27 +540,49 @@ function renderMascotSvg(zoneKey, size) {
 }
 
 /* マスコットのひとこと。ゾーンごとに複数バリエーションを持たせ、30分ごとに入れ替える */
-const MASCOT_MESSAGES = {
+/* 子ども向け：かわいい・遊び心のあるトーン */
+const MASCOT_MESSAGES_CHILD = {
   safe: [
-    "は元気いっぱい！このまま安定をキープ",
+    "はげんきいっぱい！このままキープしよう",
     "、げんきそう！このちょうしでいこう",
-    "はにこにこ笑顔！ばっちりだよ",
+    "はにこにこえがお！ばっちりだよ",
   ],
   caution: [
-    "がすこし元気なくなってきたよ…注意しよう",
-    "がむしば菌にちょっとねらわれてるかも",
+    "がすこしげんきなくなってきたよ…ちゅういしよう",
+    "がむしばきんにちょっとねらわれてるかも",
     "をまもるために、そろそろケアしよう",
   ],
   danger: [
-    "がむしば菌におそわれてる！今すぐケアして！",
-    "がピンチ！はみがきで助けてあげよう",
-    "…むしば菌が元気いっぱいに！守ってあげて",
+    "がむしばきんにおそわれてる！いますぐケアして！",
+    "がピンチ！はみがきでたすけてあげよう",
+    "…むしばきんがげんきいっぱいに！まもってあげて",
+  ],
+};
+
+/* おとな向け：落ち着いた・状況報告に近いトーン */
+const MASCOT_MESSAGES_ADULT = {
+  safe: [
+    "は安定した状態です",
+    "は落ち着いています。この調子をキープしましょう",
+    "は唾液の力でしっかり中性を保てています",
+  ],
+  caution: [
+    "はやや酸性に傾いています",
+    "、そろそろケアのタイミングかもしれません",
+    "は脱灰と再石灰化がせめぎ合っている状態です",
+  ],
+  danger: [
+    "は脱灰が進みやすい状態です",
+    "、早めのケアがおすすめです",
+    "はむし歯リスクが高まっています"
   ],
 };
 
 function mascotCaption(zoneKey, mascotName) {
-  const name = mascotName && mascotName.trim() ? mascotName.trim() : "はみがき戦士";
-  const variants = MASCOT_MESSAGES[zoneKey] || MASCOT_MESSAGES.safe;
+  const isChild = activeAgeGroup() === "child";
+  const name = mascotName && mascotName.trim() ? mascotName.trim() : (isChild ? "はみがき戦士" : "お口の状態");
+  const pool = isChild ? MASCOT_MESSAGES_CHILD : MASCOT_MESSAGES_ADULT;
+  const variants = pool[zoneKey] || pool.safe;
   const idx = Math.floor(state.now / (30 * 60000)) % variants.length;
   return `${name}${variants[idx]}`;
 }
@@ -594,19 +646,27 @@ function buildSeries(records, now) {
 }
 
 function generateAdvice(records, now) {
+  const isChild = activeAgeGroup() === "child";
+
   if (records.length === 0) {
-    return "まだ今日の記録がありません。食事や間食のあとに記録すると、ここにケアのタイミングが表示されます。";
+    return isChild
+      ? "きょうのきろくは、まだないよ。たべたりのんだりしたら、きろくしてみよう！"
+      : "まだ今日の記録がありません。食事や間食のあとに記録すると、ここにケアのタイミングが表示されます。";
   }
   const last = records[records.length - 1];
   const minsSince = (now - last.time) / 60000;
 
   if ((last.type === "brush" || last.type === "protect") && minsSince < 90) {
-    return "歯磨き・うがいやフッ素などのケアの直後です。お口の中は回復に向かっています。次に何か食べる前に、できるだけ時間を空けましょう。";
+    return isChild
+      ? "はみがきしたね！えらい！つぎたべるまで、じかんをあけようね。"
+      : "歯磨き・うがいやフッ素などのケアの直後です。お口の中は回復に向かっています。次に何か食べる前に、できるだけ時間を空けましょう。";
   }
 
   const foodRecords = records.filter((r) => r.type === "food");
   if (foodRecords.length === 0) {
-    return "まだ今日の食事の記録がありません。食べたり飲んだりしたら記録してみましょう。";
+    return isChild
+      ? "きょうたべたもの、まだきろくしてないよ。きろくしてみよう！"
+      : "まだ今日の食事の記録がありません。食べたり飲んだりしたら記録してみましょう。";
   }
   const lastFood = foodRecords[foodRecords.length - 1];
   const cat = CATEGORY_DEFS[lastFood.category];
@@ -614,16 +674,24 @@ function generateAdvice(records, now) {
 
   const recentCount = foodRecords.filter((r) => now - r.time <= 90 * 60000).length;
   if (recentCount >= 3) {
-    return "この90分で間食が続いています。だらだら食べは口腔内が酸性の時間が長引き、歯にとって負担が大きくなります。次はまとめて食べる・時間を空けるのを意識してみましょう。";
+    return isChild
+      ? "おやつがつづいてるね。いちどにたべて、じかんをあけるといいよ。"
+      : "この90分で間食が続いています。だらだら食べは口腔内が酸性の時間が長引き、歯にとって負担が大きくなります。次はまとめて食べる・時間を空けるのを意識してみましょう。";
   }
   if (cat && cat.id === "sour" && minsSinceFood < 30) {
-    return "酸っぱいものを摂った直後は歯の表面が一時的に柔らかくなっています。今すぐの歯磨きは避け、まず水やお茶で口をゆすぎ、30分ほど待ってから歯磨きするのがおすすめです。";
+    return isChild
+      ? "すっぱいものをたべたあとは、はがやわらかいよ。すぐみがかずに、おみずでゆすいでね。"
+      : "酸っぱいものを摂った直後は歯の表面が一時的に柔らかくなっています。今すぐの歯磨きは避け、まず水やお茶で口をゆすぎ、30分ほど待ってから歯磨きするのがおすすめです。";
   }
   const brushLabel = formatClock(lastFood.time + 30 * 60000);
   if (minsSinceFood < 30) {
-    return `${brushLabel}ごろ（最後の記録から約30分後）に歯磨き・うがいをすると効果的です。唾液がpHを回復させる時間を確保できます。`;
+    return isChild
+      ? "もうすこししたら、はみがきするといいよ！"
+      : `${brushLabel}ごろ（最後の記録から約30分後）に歯磨き・うがいをすると効果的です。唾液がpHを回復させる時間を確保できます。`;
   }
-  return "唾液の働きでpHは回復に向かっています。次に何か食べる前に、水やお茶で軽く口をゆすいでおくと良いでしょう。";
+  return isChild
+    ? "つばのちからで、もとにもどってるよ。つぎたべるまえに、おみずでゆすごう。"
+    : "唾液の働きでpHは回復に向かっています。次に何か食べる前に、水やお茶で軽く口をゆすいでおくと良いでしょう。";
 }
 
 function renderChartSvg(records, now) {
@@ -1273,25 +1341,26 @@ function maybeFireBrowserNotification() {
 
 /* 「今日できたこと」チェックリスト。時間帯ベースの簡易判定で、朝・昼・夜の歯磨きと間食の頻度を見る */
 const CHECKLIST_ITEMS = [
-  { id: "morning_brush", label: "朝の歯磨き", icon: "🌅", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
-  { id: "midday_brush",  label: "昼の歯磨き", icon: "☀️", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
-  { id: "night_brush",   label: "夜の仕上げ磨き", icon: "🌙", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
-  { id: "snack_limit",   label: "間食は2回まで", icon: "🍪", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
+  { id: "morning_brush", label: "朝の歯磨き", labelChild: "あさのはみがき", icon: "🌅", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
+  { id: "midday_brush",  label: "昼の歯磨き", labelChild: "ひるのはみがき", icon: "☀️", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
+  { id: "night_brush",   label: "夜の仕上げ磨き", labelChild: "よるのはみがき", icon: "🌙", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
+  { id: "snack_limit",   label: "間食は2回まで", labelChild: "おやつは2かいまで", icon: "🍪", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
 ];
 
 function renderTodayChecklist(records) {
+  const isChild = activeAgeGroup() === "child";
   const items = CHECKLIST_ITEMS.map((item) => {
     const done = item.check(records);
     return `
       <div class="checklist-item ${done ? "done" : ""}">
         <span class="checklist-icon" aria-hidden="true">${done ? "✅" : item.icon}</span>
-        <span class="checklist-label">${item.label}</span>
+        <span class="checklist-label">${isChild ? item.labelChild : item.label}</span>
       </div>
     `;
   }).join("");
   return `
     <div class="card">
-      <p class="label-sm" style="margin:0 0 10px;">今日できたこと</p>
+      <p class="label-sm" style="margin:0 0 10px;">${isChild ? "きょうできたこと" : "今日できたこと"}</p>
       <div class="checklist">${items}</div>
     </div>
   `;
@@ -1315,12 +1384,13 @@ function renderHome() {
   const streak = computeGoodDayStreak(myRecords, state.now);
   const favorites = activeProfileFavorites();
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
+  const isChild = activeAgeGroup() === "child";
 
   return `
     <div class="screen">
       <div class="card mascot-hero">
         <div class="row-between">
-          <span class="label-sm">今の様子<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
+          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
         <div class="mascot-hero-body">
@@ -1328,7 +1398,7 @@ function renderHome() {
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
         <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
-          ${state.showPhDetail ? "数値を閉じる ▲" : "くわしい数値を見る ▾"}
+          ${state.showPhDetail ? (isChild ? "とじる ▲" : "数値を閉じる ▲") : (isChild ? "すうじをみる ▾" : "くわしい数値を見る ▾")}
         </button>
         ${state.showPhDetail ? `
           <div class="ph-detail">
@@ -1349,18 +1419,18 @@ function renderHome() {
       </div>
 
       <div class="card row-between">
-        <span class="label-sm">最後の記録からの経過</span>
+        <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
         <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
-          ${lastRecord ? formatElapsed(state.now - lastRecord.time) : "記録なし"}
+          ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
         </span>
       </div>
 
       <div class="card">
         <div class="row-between">
-          <span class="label-sm">今日、危険域(pH${DANGER_PH}未満)にいた時間</span>
+          <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
           <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
         </div>
-        <p style="margin:8px 0 0;font-size:0.75rem;color:var(--slate-500);">目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう</p>
+        <p style="margin:8px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
       </div>
 
       ${renderTodayChecklist(records)}
@@ -1687,41 +1757,80 @@ function renderProtectModal() {
   `;
 }
 
+function renderInfoModalChild() {
+  return `
+    <div class="modal-head">
+      <h2>はが とけたり なおったり するのは なぜ？</h2>
+      <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 むしばきん</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          あまいものをたべると、おくちのなかのばいきんが「さん」というものをつくるよ。このさんが、はをとかしちゃうんだ。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 つばのちから</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          つばには、はをなおすちからがあるよ。とけたはを、すこしずつもとにもどしてくれるんだ。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらいで やばいの？</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          いちどだけなら、だいじょうぶ。でも、なんかいもおやつをたべたり、はみがきをわすれたりすると、はがとけるじかんがながくなっちゃうよ。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          たべるかいすうと、じかんのあけかた、はみがきのタイミングが、たいせつだよ！
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function renderInfoModalAdult() {
+  return `
+    <div class="modal-head">
+      <h2>脱灰・再石灰化ってなに？</h2>
+      <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 脱灰（だっかい）</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          食べ物や飲み物に含まれる糖分をエサに、お口の中の細菌が酸を作り出します。この酸によって、歯の表面（エナメル質）からカルシウムなどのミネラルが溶け出してしまうことを「脱灰」と呼びます。pHが${DANGER_PH}を下回ると、この反応が急速に進むといわれています。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 再石灰化（さいせっかいか）</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          唾液にはカルシウムやリンなどのミネラルが含まれていて、溶け出した歯の表面を少しずつ修復してくれます。これを「再石灰化」と呼びます。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらい続くとよくないの？</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          1回だけ短時間酸性に傾いても、唾液の力ですぐに回復しやすく、大きな問題にはなりにくいとされています。ただし一般的には、pHが臨界値（${DANGER_PH}）を下回る状態が1回あたり${GOOD_DAY_MAX_DANGER_MIN}分前後より長く続くと、唾液による回復が追いつきにくくなり、脱灰が優勢な時間が延びやすいといわれています。1日の中で危険域にいた時間の合計も、むし歯リスクの目安になります。ホーム画面や履歴画面の「危険域にいた時間」を参考にしてみてください。
+        </p>
+      </div>
+      <div>
+        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
+          この2つは毎日、何度も繰り返されています。脱灰の時間が長すぎたり、頻繁すぎたりして再石灰化が追いつかなくなると、むし歯につながります。だからこそ「食べる回数」と「時間の間隔」、そして「歯磨きのタイミング」が大切なのです。
+        </p>
+      </div>
+    </div>
+  `;
+}
+
 function renderInfoModal() {
   if (!state.showInfo) return "";
+  const body = activeAgeGroup() === "child" ? renderInfoModalChild() : renderInfoModalAdult();
   return `
     <div class="modal-overlay" data-action="close-info">
-      <div class="modal-sheet">
-        <div class="modal-head">
-          <h2>脱灰・再石灰化ってなに？</h2>
-          <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div>
-            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 脱灰（だっかい）</p>
-            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-              食べ物や飲み物に含まれる糖分をエサに、お口の中の細菌が酸を作り出します。この酸によって、歯の表面（エナメル質）からカルシウムなどのミネラルが溶け出してしまうことを「脱灰」と呼びます。pHが${DANGER_PH}を下回ると、この反応が急速に進むといわれています。
-            </p>
-          </div>
-          <div>
-            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 再石灰化（さいせっかいか）</p>
-            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-              唾液にはカルシウムやリンなどのミネラルが含まれていて、溶け出した歯の表面を少しずつ修復してくれます。これを「再石灰化」と呼びます。
-            </p>
-          </div>
-          <div>
-            <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらい続くとよくないの？</p>
-            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-              1回だけ短時間酸性に傾いても、唾液の力ですぐに回復しやすく、大きな問題にはなりにくいとされています。ただし一般的には、pHが臨界値（${DANGER_PH}）を下回る状態が1回あたり${GOOD_DAY_MAX_DANGER_MIN}分前後より長く続くと、唾液による回復が追いつきにくくなり、脱灰が優勢な時間が延びやすいといわれています。1日の中で危険域にいた時間の合計も、むし歯リスクの目安になります。ホーム画面や履歴画面の「危険域にいた時間」を参考にしてみてください。
-            </p>
-          </div>
-          <div>
-            <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-              この2つは毎日、何度も繰り返されています。脱灰の時間が長すぎたり、頻繁すぎたりして再石灰化が追いつかなくなると、むし歯につながります。だからこそ「食べる回数」と「時間の間隔」、そして「歯磨きのタイミング」が大切なのです。
-            </p>
-          </div>
-        </div>
-      </div>
+      <div class="modal-sheet">${body}</div>
     </div>
   `;
 }
