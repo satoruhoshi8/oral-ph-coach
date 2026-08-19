@@ -150,7 +150,6 @@
   .mascot-hero-body { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 6px; }
   .mascot-hero-body svg { animation: mascot-float 3s ease-in-out infinite; }
   .mascot-hero-caption { margin: 0; font-size:0.9375rem; font-weight: 700; color: var(--slate-800); text-align: center; line-height: 1.4; }
-  .detail-toggle { display: block; margin: 6px auto 0; background: none; border: none; font-size:0.75rem; font-weight: 700; color: var(--teal-dark); }
   .ph-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-100); }
   .ph-detail-divider { height: 1px; background: var(--slate-100); margin: 14px 0; }
   @keyframes mascot-float {
@@ -270,11 +269,17 @@
   .option-pill { padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--slate-200); background: var(--slate-50); font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
   .option-pill.selected { border-color: var(--teal); background: var(--accent-soft-bg); color: var(--teal-dark); }
 
-  .profile-switcher { display: flex; gap: 8px; padding: 4px 20px 14px; overflow-x: auto; }
-  .profile-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; padding: 6px 4px; flex-shrink: 0; width: 3.5rem; }
+  .profile-bar { padding: 2px 20px 10px; }
+  .profile-current-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 999px; padding: 5px 12px 5px 6px; }
+  .profile-current-btn .profile-avatar { width: 1.625rem; height: 1.625rem; font-size:0.9375rem; }
+  .profile-current-btn .profile-name { font-size:0.75rem; font-weight: 700; color: var(--slate-700); max-width: 6rem; }
+  .profile-current-btn .profile-switch-chevron { font-size:0.625rem; color: var(--slate-400); }
+
+  .profile-switcher { display: flex; gap: 10px; flex-wrap: wrap; }
+  .profile-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; padding: 6px 4px; flex-shrink: 0; width: 3.75rem; }
   .profile-avatar { width: 2.5rem; height: 2.5rem; border-radius: 999px; background: var(--slate-50); border: 2px solid transparent; display: flex; align-items: center; justify-content: center; font-size:1.25rem; flex-shrink: 0; }
   .profile-chip.active .profile-avatar { border-color: var(--teal); background: var(--accent-soft-bg-strong); }
-  .profile-name { font-size:0.6875rem; color: var(--slate-500); max-width: 3.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-name { font-size:0.6875rem; color: var(--slate-500); max-width: 3.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .profile-chip.active .profile-name { color: var(--teal-dark); font-weight: 700; }
   .profile-chip-add .profile-avatar { border: 1.5px dashed var(--slate-400); color: var(--slate-400); background: none; }
 
@@ -720,23 +725,24 @@ function renderMascotSvg(zoneKey, size) {
       </filter>
     </defs>
   `;
+  const molarPath = "M35,26 Q40,14 48,20 Q54,14 60,20 Q66,14 72,20 Q80,14 85,26 Q94,34 90,46 Q88,54 80,58 Q84,66 82,82 Q81,96 74,98 Q68,99 66,90 Q64,78 62,64 Q60,60 58,64 Q56,78 54,90 Q52,99 46,98 Q39,96 38,82 Q36,66 40,58 Q32,54 30,46 Q26,34 35,26 Z";
   if (zoneKey === "safe") {
     return `
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         ${defs}
         <g filter="url(#mg-shadow)">
-          <path d="M60 14c-17 0-27.5 12.5-27.5 29 0 20.5 8.5 41 14.5 53.5 3.2 6.7 6.4 10.5 13 10.5s9.8-3.8 13-10.5c6-12.5 14.5-33 14.5-53.5 0-16.5-10.5-29-27.5-29z" fill="url(#mg-safe)" stroke="#a7f3d0" stroke-width="2.5"/>
-          <ellipse cx="45" cy="30" rx="7" ry="4.5" fill="#ffffff" opacity="0.85" transform="rotate(-25 45 30)"/>
-          <circle cx="48.5" cy="48" r="5" fill="#1e293b"/>
-          <circle cx="71.5" cy="48" r="5" fill="#1e293b"/>
-          <circle cx="50" cy="46" r="1.6" fill="#ffffff"/>
-          <circle cx="73" cy="46" r="1.6" fill="#ffffff"/>
-          <path d="M47 61 Q60 72 73 61" stroke="#1e293b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-          <circle cx="38" cy="57" r="5.5" fill="#fda4af" opacity="0.55"/>
-          <circle cx="82" cy="57" r="5.5" fill="#fda4af" opacity="0.55"/>
+          <path d="${molarPath}" fill="url(#mg-safe)" stroke="#a7f3d0" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="42" cy="30" rx="6" ry="4" fill="#ffffff" opacity="0.85" transform="rotate(-20 42 30)"/>
+          <circle cx="48" cy="41" r="4.6" fill="#1e293b"/>
+          <circle cx="72" cy="41" r="4.6" fill="#1e293b"/>
+          <circle cx="49.4" cy="39.2" r="1.5" fill="#ffffff"/>
+          <circle cx="73.4" cy="39.2" r="1.5" fill="#ffffff"/>
+          <path d="M47 49 Q60 57 73 49" stroke="#1e293b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+          <circle cx="39" cy="45" r="4.8" fill="#fda4af" opacity="0.55"/>
+          <circle cx="81" cy="45" r="4.8" fill="#fda4af" opacity="0.55"/>
         </g>
-        <path d="M93 16 l3.2 7.8 7.8 3.2-7.8 3.2-3.2 7.8-3.2-7.8-7.8-3.2 7.8-3.2z" fill="#fbbf24"/>
-        <path d="M23 66 l2 4.8 4.8 2-4.8 2-2 4.8-2-4.8-4.8-2 4.8-2z" fill="#fbbf24" opacity="0.85"/>
+        <path d="M96 14 l3 7.2 7.2 3-7.2 3-3 7.2-3-7.2-7.2-3 7.2-3z" fill="#fbbf24"/>
+        <path d="M18 60 l1.8 4.4 4.4 1.8-4.4 1.8-1.8 4.4-1.8-4.4-4.4-1.8 4.4-1.8z" fill="#fbbf24" opacity="0.85"/>
       </svg>
     `;
   }
@@ -745,17 +751,17 @@ function renderMascotSvg(zoneKey, size) {
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         ${defs}
         <g filter="url(#mg-shadow)">
-          <path d="M60 14c-17 0-27.5 12.5-27.5 29 0 20.5 8.5 41 14.5 53.5 3.2 6.7 6.4 10.5 13 10.5s9.8-3.8 13-10.5c6-12.5 14.5-33 14.5-53.5 0-16.5-10.5-29-27.5-29z" fill="url(#mg-caution)" stroke="#f5c451" stroke-width="2.5"/>
-          <ellipse cx="45" cy="30" rx="7" ry="4.5" fill="#ffffff" opacity="0.75" transform="rotate(-25 45 30)"/>
-          <path d="M43 42 q5.5-5 11 0" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <path d="M66 42 q5.5-5 11 0" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
-          <circle cx="48.5" cy="49" r="4.6" fill="#1e293b"/>
-          <circle cx="71.5" cy="49" r="4.6" fill="#1e293b"/>
-          <circle cx="50" cy="47" r="1.5" fill="#ffffff"/>
-          <circle cx="73" cy="47" r="1.5" fill="#ffffff"/>
-          <path d="M47 65 Q60 61 73 65" stroke="#1e293b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          <path d="${molarPath}" fill="url(#mg-caution)" stroke="#f5c451" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="42" cy="30" rx="6" ry="4" fill="#ffffff" opacity="0.75" transform="rotate(-20 42 30)"/>
+          <path d="M43 34 q5-4.5 10 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M67 34 q5-4.5 10 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <circle cx="48" cy="42" r="4.2" fill="#1e293b"/>
+          <circle cx="72" cy="42" r="4.2" fill="#1e293b"/>
+          <circle cx="49.2" cy="40.4" r="1.4" fill="#ffffff"/>
+          <circle cx="73.2" cy="40.4" r="1.4" fill="#ffffff"/>
+          <path d="M47 54 Q60 50 73 54" stroke="#1e293b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
         </g>
-        <path d="M88 24 q6 8 0 16 q-6-2-3.5-10 q1-4 3.5-6z" fill="#38bdf8"/>
+        <path d="M91 20 q5.5 7 0 14 q-5.5-1.8-3.2-9 q0.9-3.5 3.2-5z" fill="#38bdf8"/>
       </svg>
     `;
   }
@@ -1495,7 +1501,7 @@ const state = {
   showDailyFeedback: false,
   dailyFeedback: null,
   celebrate: null,
-  showPhDetail: false,
+  showProfileSwitcher: false,
   openHelpTopics: [],
   now: Date.now(),
 };
@@ -1640,43 +1646,37 @@ function renderHome() {
           ${renderMascotSvg(zone.key, 84)}
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
-        ${isChild ? `
-          <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
-            ${state.showPhDetail ? "とじる ▲" : "もっとみる ▾"}
-          </button>
-        ` : ""}
-        ${(isChild ? state.showPhDetail : true) ? `
-          <div class="ph-detail">
-            <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
-            <div class="gauge-track" aria-hidden="true">
-              <div class="gauge-threshold" style="left:${dangerPct}%;"></div>
-              <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
-            </div>
-            <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
-            <div class="ph-detail-divider"></div>
-            <p class="explain-status">${exp.status}</p>
-            <div class="explain-row">${iconGlyph("warning", 20)}<p>${exp.worsens}</p></div>
-            <div class="explain-row">${iconGlyph("check", 20)}<p>${exp.helps}</p></div>
-            <div class="ph-detail-divider"></div>
-            <div class="row-between">
-              <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
-              <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
-                ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
-              </span>
-            </div>
-            <div class="row-between" style="margin-top:10px;">
-              <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
-              <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
-            </div>
-            <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
+        <div class="ph-detail">
+          <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
+          <div class="gauge-track" aria-hidden="true">
+            <div class="gauge-threshold" style="left:${dangerPct}%;"></div>
+            <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
           </div>
-        ` : ""}
+          <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
+        </div>
+        <div class="btn-stack" style="margin-top:16px;">
+          <button class="cta-btn" data-action="open-modal">${smartIcon("plate", "🍽️", 22)} 食べた／飲んだを記録する</button>
+          <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
+          <button class="secondary-btn" data-action="open-protect-modal">${smartIcon("shield", "🧪", 22)} 歯を守るケアを記録</button>
+        </div>
       </div>
 
-      <div class="btn-stack">
-        <button class="cta-btn" data-action="open-modal">${smartIcon("plate", "🍽️", 22)} 食べた／飲んだを記録する</button>
-        <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
-        <button class="secondary-btn" data-action="open-protect-modal">${smartIcon("shield", "🧪", 22)} 歯を守るケアを記録</button>
+      <div class="card">
+        <p class="explain-status">${exp.status}</p>
+        <div class="explain-row">${iconGlyph("warning", 20)}<p>${exp.worsens}</p></div>
+        <div class="explain-row">${iconGlyph("check", 20)}<p>${exp.helps}</p></div>
+        <div class="ph-detail-divider"></div>
+        <div class="row-between">
+          <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
+          <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
+            ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
+          </span>
+        </div>
+        <div class="row-between" style="margin-top:10px;">
+          <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
+          <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+        </div>
+        <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
       </div>
 
       ${renderTodayChecklist(records)}
@@ -2097,6 +2097,20 @@ function renderInfoModal() {
 }
 
 function renderProfileSwitcher() {
+  const active = state.profiles.find((p) => p.id === state.activeProfileId);
+  return `
+    <div class="profile-bar">
+      <button class="profile-current-btn" data-action="open-profile-switcher">
+        <span class="profile-avatar">${active ? active.avatar : "⭐"}</span>
+        <span class="profile-name">${active ? escapeHtml(active.name) : ""}</span>
+        <span class="profile-switch-chevron" aria-hidden="true">▾</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderProfileSwitcherModal() {
+  if (!state.showProfileSwitcher) return "";
   const chips = state.profiles.map((p) => `
     <button class="profile-chip ${p.id === state.activeProfileId ? "active" : ""}" data-action="switch-profile" data-profileid="${p.id}" aria-pressed="${p.id === state.activeProfileId}">
       <span class="profile-avatar">${p.avatar}</span>
@@ -2104,11 +2118,19 @@ function renderProfileSwitcher() {
     </button>
   `).join("");
   return `
-    <div class="profile-switcher">
-      ${chips}
-      <button class="profile-chip profile-chip-add" data-action="open-add-profile" aria-label="プロフィールを追加">
-        <span class="profile-avatar">＋</span>
-      </button>
+    <div class="modal-overlay" data-action="close-profile-switcher">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>プロフィールを切り替え</h2>
+          <button class="modal-close" data-action="close-profile-switcher" aria-label="閉じる">×</button>
+        </div>
+        <div class="profile-switcher">
+          ${chips}
+          <button class="profile-chip profile-chip-add" data-action="open-add-profile" aria-label="プロフィールを追加">
+            <span class="profile-avatar">＋</span>
+          </button>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -2224,6 +2246,7 @@ function render() {
     ${renderProtectModal()}
     ${renderInfoModal()}
     ${renderProfileModal()}
+    ${renderProfileSwitcherModal()}
     ${renderDailyFeedbackModal()}
   `;
 }
@@ -2424,10 +2447,6 @@ document.addEventListener("click", (e) => {
       saveSettings();
       render();
       break;
-    case "toggle-ph-detail":
-      state.showPhDetail = !state.showPhDetail;
-      render();
-      break;
     case "toggle-notify": {
       if (state.notifyEnabled) {
         state.notifyEnabled = false;
@@ -2477,13 +2496,23 @@ document.addEventListener("click", (e) => {
       triggerCelebration("✨", "できたね！");
       render();
       break;
+    case "open-profile-switcher":
+      state.showProfileSwitcher = true;
+      render();
+      break;
+    case "close-profile-switcher":
+      state.showProfileSwitcher = false;
+      render();
+      break;
     case "switch-profile":
       state.activeProfileId = el.dataset.profileid;
       state.expandedDay = null;
+      state.showProfileSwitcher = false;
       saveProfiles();
       render();
       break;
     case "open-add-profile":
+      state.showProfileSwitcher = false;
       state.showProfileModal = true;
       state.editingProfileId = null;
       state.profileDraftName = "";
