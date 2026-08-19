@@ -124,10 +124,10 @@
   .header { padding: 22px 20px 8px; }
   .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
   .header h1 { margin: 0; font-size:1.25rem; font-weight: 800; color: var(--slate-800); }
-  .header p { margin: 2px 0 0; font-size:0.75rem; color: var(--slate-400); }
   .settings-btn { background: none; border: none; padding: 6px; color: var(--slate-500); flex-shrink: 0; display: flex; }
   .nav-icon-svg { display: block; }
   .icon-chip { display: inline-flex; align-items: center; justify-content: center; border-radius: 30%; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.15); vertical-align: middle; }
+  .emoji-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; vertical-align: middle; line-height: 1; }
   .main { flex: 1; overflow-y: auto; padding-bottom: 8px; }
   .screen { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
 
@@ -197,7 +197,7 @@
   .nav button.active { color: var(--teal); box-shadow: inset 0 -2px 0 var(--teal); }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
-  .modal-sheet { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 24px 24px 0 0; padding: 20px 20px 32px; max-height: 85vh; overflow-y: auto; }
+  .modal-sheet { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 24px 24px 0 0; padding: 20px 20px 32px; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; }
   .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .modal-head h2 { margin: 0; font-size:1.0625rem; font-weight: 800; color: var(--slate-800); }
   .modal-close { background: none; border: none; font-size:1.625rem; line-height: 1; color: var(--slate-400); padding: 0 4px; }
@@ -230,6 +230,7 @@
   .timeline-time { width: 44px; flex-shrink: 0; font-size:0.75rem; font-weight: 700; color: var(--slate-500); padding-top: 6px; }
   .timeline-icon { flex-shrink: 0; }
   .timeline-item.current .timeline-icon .icon-chip { box-shadow: 0 0 0 2.5px var(--teal); }
+  .timeline-item.current .timeline-icon .emoji-icon { box-shadow: inset 0 0 0 2px var(--teal); border-radius: 30%; }
   .timeline-body { flex: 1; padding-top: 4px; }
   .timeline-title { font-size:0.875rem; font-weight: 700; color: var(--slate-800); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
   .timeline-item.current .timeline-title { color: var(--teal-dark); }
@@ -374,7 +375,7 @@ function getMealType(id) {
 /* 家族プロフィール：誰の記録かを表す。アイコンは動物・シンボル系にして年齢性別を問わないようにする */
 const PROFILE_AVATARS = ["⭐", "🐥", "🐻", "🐰", "🐱", "🦁", "🐶", "🐼", "🌸", "🍀"];
 const PROFILE_AGE_GROUPS = [
-  { id: "child", label: "お子さま" },
+  { id: "child", label: "こども" },
   { id: "adult", label: "おとな" },
 ];
 
@@ -393,16 +394,16 @@ function getProtectAction(id) {
 function recordLabelHtml(r) {
   let icon, text;
   if (r.type === "brush") {
-    icon = iconGlyph("toothbrush", 24);
+    icon = smartIcon("toothbrush", "🪥", 24);
     text = "歯磨き・うがい";
   } else if (r.type === "protect") {
     const p = getProtectAction(r.protectId);
-    icon = iconGlyph(p ? p.icon : "shield", 24);
+    icon = smartIcon(p ? p.icon : "shield", p ? p.emoji : "🧪", 24);
     text = p ? escapeHtml(p.label) : "ケア";
   } else {
     const cat = CATEGORY_DEFS[r.category];
     const mealType = getMealType(r.mealType);
-    icon = iconGlyph(cat.icon, 24);
+    icon = smartIcon(cat.icon, cat.emoji, 24);
     text = `${mealType ? mealType.label + "・" : ""}${escapeHtml(cat.label)}`;
   }
   return `<span style="display:flex;align-items:center;gap:8px;">${icon}<span>${text}</span></span>`;
@@ -410,23 +411,23 @@ function recordLabelHtml(r) {
 
 /* 1日の理想的な食事・歯磨きサイクル（あくまで一般的な目安） */
 const SCHEDULE = [
-  { start: 7 * 60,      icon: "ricebowl",   label: "朝食",               desc: "1日を規則正しく始めましょう",
+  { start: 7 * 60,      icon: "ricebowl",   emoji: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう",
     labelChild: "あさごはん", descChild: "1にちの はじまり！げんきに たべよう" },
-  { start: 7 * 60 + 30, icon: "toothbrush", label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ",
+  { start: 7 * 60 + 30, icon: "toothbrush", emoji: "🪥",  label: "歯磨き・うがい",     desc: "食後30分ほど空けてから磨くのがおすすめ",
     labelChild: "はみがき・うがい", descChild: "たべたあと ちょっと まってから みがこうね" },
-  { start: 8 * 60,      icon: "water",      label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です",
+  { start: 8 * 60,      icon: "water",      emoji: "💧",  label: "間食なしタイム",     desc: "水・お茶はOK。唾液がしっかり回復する時間です",
     labelChild: "おやつをたべない じかん", descChild: "みずやおちゃは のんでいいよ。おくちが げんきになる じかんだよ" },
-  { start: 12 * 60,     icon: "plate",      label: "昼食",               desc: "",
+  { start: 12 * 60,     icon: "plate",      emoji: "🍽️", label: "昼食",               desc: "",
     labelChild: "ひるごはん", descChild: "" },
-  { start: 12 * 60 + 30,icon: "toothbrush", label: "歯磨き・うがい",     desc: "",
+  { start: 12 * 60 + 30,icon: "toothbrush", emoji: "🪥",  label: "歯磨き・うがい",     desc: "",
     labelChild: "はみがき・うがい", descChild: "" },
-  { start: 13 * 60,     icon: "water",      label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて",
+  { start: 13 * 60,     icon: "water",      emoji: "💧",  label: "間食なしタイム",     desc: "甘いものが欲しいときは食後にまとめて",
     labelChild: "おやつをたべない じかん", descChild: "あまいものは ごはんのあとに いっしょに たべようね" },
-  { start: 19 * 60,     icon: "plate",      label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想",
+  { start: 19 * 60,     icon: "plate",      emoji: "🍽️", label: "夕食",               desc: "寝る2〜3時間前までに済ませるのが理想",
     labelChild: "ゆうごはん", descChild: "ねるまえに ゆっくり たべようね" },
-  { start: 19 * 60 + 30,icon: "toothbrush", label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります",
+  { start: 19 * 60 + 30,icon: "toothbrush", emoji: "🪥",  label: "歯磨き（1日で一番丁寧に）", desc: "寝ている間は唾液が減り、脱灰が進みやすくなります",
     labelChild: "はみがき（いちばん がんばるとき！）", descChild: "ねているあいだ おくちが むしばきんに ねらわれやすいから、いちばん ていねいに みがこう！" },
-  { start: 20 * 60,     icon: "moon",       label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です",
+  { start: 20 * 60,     icon: "moon",       emoji: "🌙",  label: "就寝まで水だけタイム", desc: "この後は水以外の飲食を控えるのが理想です",
     labelChild: "ねるまで みずだけタイム", descChild: "このあとは おみずだけ にしようね" },
 ];
 
@@ -657,6 +658,9 @@ const ICON_DEFS = {
   celebrate:  { bg: "#f59e0b", glyph: `<path d="M12 3.3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6-4.4-4.2 6-.8z" fill="#fff"/>` },
   meh:        { bg: "#94a3b8", glyph: `<path d="M12 3.5c3 4.2 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.8 6-11z" fill="#fff"/>` },
   check:      { bg: "#10b981", glyph: `<path d="M5.5 12.5l4 4 9-9.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+  info:       { bg: "#64748b", glyph: `<circle cx="12" cy="12" r="8" fill="#fff"/><circle cx="12" cy="7.6" r="1.15" fill="#64748b"/><path d="M12 10.8v6" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/>` },
+  warning:    { bg: "#d97706", glyph: `<path d="M12 3.5 21 19H3z" fill="#fff"/><path d="M12 9.5v4.5" stroke="#d97706" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.05" fill="#d97706"/>` },
+  trash:      { bg: "#94a3b8", glyph: `<path d="M5 7h14M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4L17.5 7" fill="#fff"/><path d="M10 10.5v6M14 10.5v6" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" stroke-linecap="round"/>` },
 };
 
 /* iconKeyに対応する色付きチップ＋白いシルエットのSVGアイコンを返す */
@@ -666,6 +670,16 @@ function iconGlyph(iconKey, size) {
   if (!def) return "";
   const inner = Math.round(s * 0.62);
   return `<span class="icon-chip" style="background:${def.bg};width:${s}px;height:${s}px;"><svg viewBox="0 0 24 24" width="${inner}" height="${inner}" aria-hidden="true">${def.glyph}</svg></span>`;
+}
+
+/* 食品・ケアなど「絵柄で内容を判別する」アイコンは、こども向けプロフィールでは
+   より直感的にわかりやすい絵文字表示に、おとな向けでは自作の統一アイコンに切り替える */
+function smartIcon(iconKey, emoji, size) {
+  const s = size || 28;
+  if (activeAgeGroup() === "child" && emoji) {
+    return `<span class="emoji-icon" style="width:${s}px;height:${s}px;font-size:${Math.round(s * 0.72)}px;" aria-hidden="true">${emoji}</span>`;
+  }
+  return iconGlyph(iconKey, s);
 }
 
 function renderMascotSvg(zoneKey, size) {
@@ -977,7 +991,7 @@ function renderCycleScreen() {
     return `
     <div class="timeline-item ${i === curIdx ? "current" : ""}">
       <div class="timeline-time">${minutesToLabel(s.start)}</div>
-      <div class="timeline-icon" aria-hidden="true">${iconGlyph(s.icon, 34)}</div>
+      <div class="timeline-icon" aria-hidden="true">${smartIcon(s.icon, s.emoji, 34)}</div>
       <div class="timeline-body">
         <div class="timeline-title">${label}${i === curIdx ? `<span class="now-tag">${isChild ? "いまのじかん" : "今の時間帯"}</span>` : ""}</div>
         ${desc ? `<div class="timeline-desc">${desc}</div>` : ""}
@@ -1553,10 +1567,10 @@ function maybeFireBrowserNotification() {
 
 /* 「今日できたこと」チェックリスト。時間帯ベースの簡易判定で、朝・昼・夜の歯磨きと間食の頻度を見る */
 const CHECKLIST_ITEMS = [
-  { id: "morning_brush", label: "朝の歯磨き", labelChild: "あさのはみがき", icon: "sunrise", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
-  { id: "midday_brush",  label: "昼の歯磨き", labelChild: "ひるのはみがき", icon: "sun", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
-  { id: "night_brush",   label: "夜の仕上げ磨き", labelChild: "よるのはみがき", icon: "moon", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
-  { id: "snack_limit",   label: "間食は2回まで", labelChild: "おやつは2かいまで", icon: "cookie", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
+  { id: "morning_brush", label: "朝の歯磨き", labelChild: "あさのはみがき", icon: "sunrise", emoji: "🌅", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
+  { id: "midday_brush",  label: "昼の歯磨き", labelChild: "ひるのはみがき", icon: "sun", emoji: "☀️", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
+  { id: "night_brush",   label: "夜の仕上げ磨き", labelChild: "よるのはみがき", icon: "moon", emoji: "🌙", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
+  { id: "snack_limit",   label: "間食は2回まで", labelChild: "おやつは2かいまで", icon: "cookie", emoji: "🍪", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
 ];
 
 function renderTodayChecklist(records) {
@@ -1565,7 +1579,7 @@ function renderTodayChecklist(records) {
     const done = item.check(records);
     return `
       <div class="checklist-item ${done ? "done" : ""}">
-        <span class="checklist-icon" aria-hidden="true">${iconGlyph(done ? "check" : item.icon, 24)}</span>
+        <span class="checklist-icon" aria-hidden="true">${done ? iconGlyph("check", 24) : smartIcon(item.icon, item.emoji, 24)}</span>
         <span class="checklist-label">${isChild ? item.labelChild : item.label}</span>
       </div>
     `;
@@ -1589,7 +1603,7 @@ function renderHome() {
 
   const cooldown = brushCooldownRemainMs();
   const brushDisabled = cooldown > 0;
-  const brushLabel = `${iconGlyph("toothbrush", 22)} ${brushDisabled ? "歯磨き済み" : "歯磨きした"}`;
+  const brushLabel = `${smartIcon("toothbrush", "🪥", 22)} ${brushDisabled ? "歯磨き済み" : "歯磨きした"}`;
 
   const dangerMinToday = todayDangerMinutes();
   const myRecords = activeProfileRecords();
@@ -1602,7 +1616,7 @@ function renderHome() {
     <div class="screen">
       <div class="card mascot-hero">
         <div class="row-between">
-          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
+          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">${iconGlyph("info", 18)}</button></span>
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
         <div class="mascot-hero-body">
@@ -1624,8 +1638,8 @@ function renderHome() {
             <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
             <div class="ph-detail-divider"></div>
             <p class="explain-status">${exp.status}</p>
-            <div class="explain-row"><span aria-hidden="true">⚠️</span><p>${exp.worsens}</p></div>
-            <div class="explain-row"><span aria-hidden="true">✅</span><p>${exp.helps}</p></div>
+            <div class="explain-row">${iconGlyph("warning", 20)}<p>${exp.worsens}</p></div>
+            <div class="explain-row">${iconGlyph("check", 20)}<p>${exp.helps}</p></div>
             <div class="ph-detail-divider"></div>
             <div class="row-between">
               <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
@@ -1640,6 +1654,12 @@ function renderHome() {
             <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
           </div>
         ` : ""}
+      </div>
+
+      <div class="btn-stack">
+        <button class="cta-btn" data-action="open-modal">${smartIcon("plate", "🍽️", 22)} 食べた／飲んだを記録する</button>
+        <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
+        <button class="secondary-btn" data-action="open-protect-modal">${smartIcon("shield", "🧪", 22)} 歯を守るケアを記録</button>
       </div>
 
       ${renderTodayChecklist(records)}
@@ -1672,20 +1692,14 @@ function renderHome() {
 
       ${shouldShowBrushReminder() ? `
         <div class="card reminder-card">
-          ${iconGlyph("alarmclock", 32)}
+          ${smartIcon("alarmclock", "⏰", 32)}
           <div style="flex:1;">
             <p style="margin:0;font-size:0.875rem;font-weight:800;color:var(--slate-800);">そろそろ仕上げ磨きの時間です</p>
             <p style="margin:2px 0 0;font-size:0.75rem;color:var(--slate-500);">${state.reminderTime}を目安に設定しています（設定でいつでも変更できます）</p>
           </div>
-          <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">${iconGlyph("toothbrush", 26)}</button>
+          <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">${smartIcon("toothbrush", "🪥", 26)}</button>
         </div>
       ` : ""}
-
-      <div class="btn-stack">
-        <button class="cta-btn" data-action="open-modal">${iconGlyph("plate", 22)} 食べた／飲んだを記録する</button>
-        <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
-        <button class="secondary-btn" data-action="open-protect-modal">${iconGlyph("shield", 22)} 歯を守るケアを記録</button>
-      </div>
     </div>
   `;
 }
@@ -1797,7 +1811,7 @@ function renderProfileSettingsList() {
   const rows = state.profiles.map((p) => `
     <div class="profile-row">
       <span class="profile-avatar" style="width:2.25rem;height:2.25rem;font-size:1.125rem;">${p.avatar}</span>
-      <span style="flex:1;font-size:0.875rem;font-weight:700;color:var(--slate-700);">${escapeHtml(p.name)}<span style="font-weight:400;color:var(--slate-400);font-size:0.75rem;margin-left:6px;">${p.ageGroup === "child" ? "お子さま" : "おとな"}</span></span>
+      <span style="flex:1;font-size:0.875rem;font-weight:700;color:var(--slate-700);">${escapeHtml(p.name)}<span style="font-weight:400;color:var(--slate-400);font-size:0.75rem;margin-left:6px;">${p.ageGroup === "child" ? "こども" : "おとな"}</span></span>
       <button class="back-link" data-action="open-edit-profile" data-profileid="${p.id}">編集</button>
     </div>
   `).join("");
@@ -1895,7 +1909,7 @@ function renderSettingsScreen() {
 function renderMealTypeStep() {
   const buttons = MEAL_TYPES.map((m) => `
     <button class="cat-btn" data-action="select-meal-type" data-mealtype="${m.id}">
-      ${iconGlyph(m.icon, 40)}
+      ${smartIcon(m.icon, m.emoji, 40)}
       <span class="cat-label">${m.label}</span>
     </button>
   `).join("");
@@ -1916,7 +1930,7 @@ function renderCategoryStep() {
     return `
     <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-category" data-category="${c.id}" aria-pressed="${selected}">
       ${selected ? '<span class="cat-check">✓</span>' : ""}
-      ${iconGlyph(c.icon, 40)}
+      ${smartIcon(c.icon, c.emoji, 40)}
       <span class="cat-label">${escapeHtml(c.label)}</span>
       <span class="cat-desc">${escapeHtml(c.desc)}</span>
     </button>
@@ -1930,7 +1944,7 @@ function renderCategoryStep() {
 
   return `
     <div class="modal-head">
-      <h2 style="display:flex;align-items:center;gap:8px;">${mealType ? `${iconGlyph(mealType.icon, 26)} ${mealType.label}` : "何を食べた／飲んだ？"}</h2>
+      <h2 style="display:flex;align-items:center;gap:8px;">${mealType ? `${smartIcon(mealType.icon, mealType.emoji, 26)} ${mealType.label}` : "何を食べた／飲んだ？"}</h2>
       <button class="modal-close" data-action="close-modal" aria-label="閉じる">×</button>
     </div>
     <button class="back-link" data-action="back-to-mealtype">← 時間帯を選びなおす</button>
@@ -1963,7 +1977,7 @@ function renderProtectModal() {
     return `
     <button class="cat-btn ${selected ? "selected" : ""}" data-action="toggle-protect" data-protect="${p.id}" aria-pressed="${selected}">
       ${selected ? '<span class="cat-check">✓</span>' : ""}
-      ${iconGlyph(p.icon, 40)}
+      ${smartIcon(p.icon, p.emoji, 40)}
       <span class="cat-label">${escapeHtml(p.label)}</span>
       <span class="cat-desc">${escapeHtml(p.desc)}</span>
     </button>
@@ -2174,7 +2188,6 @@ function render() {
         <div class="header-row">
           <div>
             <h1>Oral pH Coach</h1>
-            <p>口腔内pHシミュレーション（プロトタイプ）</p>
           </div>
           <button class="settings-btn" data-action="go-settings" aria-label="設定">${navIcon("settings")}</button>
         </div>
