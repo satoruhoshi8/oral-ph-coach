@@ -280,6 +280,9 @@
     80% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
     100% { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.98); }
   }
+
+  .reminder-card { display: flex; align-items: center; gap: 12px; background: var(--amber-bg); border: 1px solid var(--amber); }
+  .reminder-dismiss { background: var(--card-bg); border: 1.5px solid var(--amber); border-radius: 999px; width: 2.75rem; height: 2.75rem; font-size: 1.25rem; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -1027,6 +1030,9 @@ function saveSettings() {
       detailLevel: state.detailLevel,
       themePref: state.themePref,
       fontSizePref: state.fontSizePref,
+      reminderEnabled: state.reminderEnabled,
+      reminderTime: state.reminderTime,
+      notifyEnabled: state.notifyEnabled,
     }));
   } catch (e) {}
 }
@@ -1161,11 +1167,17 @@ const state = {
   detailLevel: savedSettings.detailLevel || DEFAULT_DETAIL_LEVEL,
   themePref: savedSettings.themePref || "auto",
   fontSizePref: savedSettings.fontSizePref || "standard",
+  reminderEnabled: savedSettings.reminderEnabled !== false,
+  reminderTime: savedSettings.reminderTime || "20:00",
+  notifyEnabled: savedSettings.notifyEnabled === true,
   showDailyFeedback: false,
   dailyFeedback: null,
   celebrate: null,
   now: Date.now(),
 };
+if (state.notifyEnabled && (typeof Notification === "undefined" || Notification.permission !== "granted")) {
+  state.notifyEnabled = false;
+}
 applyTheme();
 migrateProfileOwnership();
 
@@ -1183,6 +1195,7 @@ migrateProfileOwnership();
 
 let deferredInstallPrompt = null;
 let celebrateTimer = null;
+let notifiedReminderKey = null;
 
 function triggerCelebration(emoji, text) {
   state.celebrate = { emoji, text };
@@ -1213,6 +1226,36 @@ function todayDangerMinutes() {
   const records = todayRecords();
   if (records.length === 0) return 0;
   return computeZoneMinutes(records, dayStartTs(state.now), state.now, 2).dangerMin;
+}
+
+/* 設定した目安時間を過ぎても仕上げ磨きの記録がなければリマインドを出す（過ぎてから3時間だけ表示） */
+function shouldShowBrushReminder() {
+  if (!state.reminderEnabled) return false;
+  const [h, m] = (state.reminderTime || "20:00").split(":").map(Number);
+  const reminderMinutes = h * 60 + m;
+  const nowMinutes = currentMinutesOfDay(state.now);
+  if (nowMinutes < reminderMinutes || nowMinutes > reminderMinutes + 180) return false;
+  const brushedAfterReminder = todayRecords().some((r) => {
+    if (r.type !== "brush") return false;
+    return currentMinutesOfDay(r.time) >= reminderMinutes;
+  });
+  return !brushedAfterReminder;
+}
+
+/* ブラウザ通知（このタブ/ウィンドウが開いている間のみ届く。閉じている間は届かない） */
+function maybeFireBrowserNotification() {
+  if (!state.notifyEnabled || !shouldShowBrushReminder()) return;
+  const key = `${state.activeProfileId}-${dayKey(new Date(state.now))}`;
+  if (notifiedReminderKey === key) return;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  const profile = state.profiles.find((p) => p.id === state.activeProfileId);
+  try {
+    new Notification("そろそろ仕上げ磨きの時間です", {
+      body: profile ? `${profile.name}の記録をつけましょう` : "記録をつけましょう",
+      icon: "icon.svg",
+    });
+    notifiedReminderKey = key;
+  } catch (e) {}
 }
 
 function renderHome() {
@@ -1299,6 +1342,17 @@ function renderHome() {
               </div>
             `).join("")}
           </div>
+        </div>
+      ` : ""}
+
+      ${shouldShowBrushReminder() ? `
+        <div class="card reminder-card">
+          <span style="font-size:1.5rem;" aria-hidden="true">⏰</span>
+          <div style="flex:1;">
+            <p style="margin:0;font-size:0.875rem;font-weight:800;color:var(--slate-800);">そろそろ仕上げ磨きの時間です</p>
+            <p style="margin:2px 0 0;font-size:0.75rem;color:var(--slate-500);">${state.reminderTime}を目安に設定しています（設定でいつでも変更できます）</p>
+          </div>
+          <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">🪥</button>
         </div>
       ` : ""}
 
@@ -1441,6 +1495,29 @@ function renderProfileSettingsList() {
   `;
 }
 
+function renderReminderSettings() {
+  return `
+    <div class="card">
+      <div class="row-between">
+        <p class="label-sm" style="margin:0;">仕上げ磨きリマインダー</p>
+        <button class="option-pill ${state.reminderEnabled ? "selected" : ""}" data-action="toggle-reminder" aria-pressed="${state.reminderEnabled}">${state.reminderEnabled ? "オン" : "オフ"}</button>
+      </div>
+      <p style="margin:8px 0 10px;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
+        設定した時間を過ぎても仕上げ磨きの記録がない場合、ホーム画面に目立つカードでお知らせします。
+      </p>
+      <input id="reminder-time-input" type="time" value="${state.reminderTime}" ${state.reminderEnabled ? "" : "disabled"}
+        style="padding:10px 14px;border-radius:12px;border:1.5px solid var(--slate-200);background:var(--slate-50);color:var(--slate-800);font-size:0.9375rem;" />
+      <div class="row-between" style="margin-top:16px;">
+        <p class="label-sm" style="margin:0;">🔔 ブラウザ通知も使う</p>
+        <button class="option-pill ${state.notifyEnabled ? "selected" : ""}" data-action="toggle-notify" aria-pressed="${state.notifyEnabled}">${state.notifyEnabled ? "オン" : "オフ"}</button>
+      </div>
+      <p style="margin:8px 0 0;font-size:0.6875rem;color:var(--slate-500);line-height:1.6;">
+        このアプリのタブ（または裏で開いているウィンドウ）が生きている間だけ通知が届きます。アプリを完全に閉じている間は届きません。
+      </p>
+    </div>
+  `;
+}
+
 function renderSettingsScreen() {
   return `
     <div class="screen">
@@ -1449,6 +1526,7 @@ function renderSettingsScreen() {
         <p class="label-sm" style="margin:0 0 10px;">家族のプロフィール</p>
         ${renderProfileSettingsList()}
       </div>
+      ${renderReminderSettings()}
       <div class="card">
         <p class="label-sm" style="margin:0 0 4px;">食事内容の記録の詳細さ</p>
         <p style="margin:0 0 14px;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
@@ -1911,6 +1989,29 @@ document.addEventListener("click", (e) => {
       applyTheme();
       render();
       break;
+    case "toggle-reminder":
+      state.reminderEnabled = !state.reminderEnabled;
+      saveSettings();
+      render();
+      break;
+    case "toggle-notify": {
+      if (state.notifyEnabled) {
+        state.notifyEnabled = false;
+        saveSettings();
+        render();
+        return;
+      }
+      if (typeof Notification === "undefined") {
+        alert("お使いのブラウザは通知に対応していません");
+        return;
+      }
+      Notification.requestPermission().then((perm) => {
+        state.notifyEnabled = perm === "granted";
+        saveSettings();
+        render();
+      });
+      break;
+    }
     case "toggle-category": {
       const catId = el.dataset.category;
       const idx = state.selectedCategories.indexOf(catId);
@@ -2030,10 +2131,15 @@ document.addEventListener("input", (e) => {
   if (e.target && e.target.id === "profile-mascot-input") {
     state.profileDraftMascotName = e.target.value;
   }
+  if (e.target && e.target.id === "reminder-time-input" && e.target.value) {
+    state.reminderTime = e.target.value;
+    saveSettings();
+  }
 });
 
 setInterval(() => {
   state.now = Date.now();
+  maybeFireBrowserNotification();
   render();
 }, 5000);
 
