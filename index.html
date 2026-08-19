@@ -148,13 +148,27 @@
   .text-danger { color: var(--red); }
 
   .mascot-hero-body { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 6px; }
-  .mascot-hero-body svg { animation: mascot-float 3s ease-in-out infinite; }
+  .mascot-tap-target { position: relative; display: flex; background: none; border: none; padding: 6px; margin: 0; cursor: pointer; animation: mascot-float 3s ease-in-out infinite; }
+  .mascot-tap-target svg.tap-bounce { animation: mascot-tap-bounce 0.55s ease; }
   .mascot-hero-caption { margin: 0; font-size:0.9375rem; font-weight: 700; color: var(--slate-800); text-align: center; line-height: 1.4; }
   .ph-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-100); }
   .ph-detail-divider { height: 1px; background: var(--slate-100); margin: 14px 0; }
   @keyframes mascot-float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
+  }
+  @keyframes mascot-tap-bounce {
+    0% { transform: scale(1) rotate(0deg); }
+    30% { transform: scale(1.16, 0.86) rotate(-6deg); }
+    55% { transform: scale(0.92, 1.12) rotate(5deg); }
+    75% { transform: scale(1.05, 0.97) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .mascot-sparkle { position: absolute; top: 45%; left: 50%; font-size:1.125rem; pointer-events: none; animation: mascot-sparkle-pop 0.85s ease-out forwards; }
+  @keyframes mascot-sparkle-pop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    25% { opacity: 1; }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -50px))) scale(1); }
   }
 
   .gauge-track { position: relative; height: 20px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
@@ -724,33 +738,36 @@ function renderMascotSvg(zoneKey, size) {
         <stop offset="0%" stop-color="#fffbeb"/>
         <stop offset="100%" stop-color="#fde68a"/>
       </linearGradient>
-      <radialGradient id="mg-danger" cx="38%" cy="32%" r="75%">
-        <stop offset="0%" stop-color="#a78bfa"/>
-        <stop offset="100%" stop-color="#6d28d9"/>
-      </radialGradient>
+      <linearGradient id="mg-danger" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fff1f2"/>
+        <stop offset="100%" stop-color="#fecaca"/>
+      </linearGradient>
       <filter id="mg-shadow" x="-30%" y="-20%" width="160%" height="150%">
         <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.18"/>
       </filter>
     </defs>
   `;
-  const molarPath = "M35,26 Q40,14 48,20 Q54,14 60,20 Q66,14 72,20 Q80,14 85,26 Q94,34 90,46 Q88,54 80,58 Q84,66 82,82 Q81,96 74,98 Q68,99 66,90 Q64,78 62,64 Q60,60 58,64 Q56,78 54,90 Q52,99 46,98 Q39,96 38,82 Q36,66 40,58 Q32,54 30,46 Q26,34 35,26 Z";
+  /* かわいい歯のシルエット：丸いクラウンと、下に2つの丸みを帯びた「根」を持つ定番のトゥース型 */
+  const toothPath = "M34,28 Q38,14 60,14 Q82,14 86,28 Q92,40 88,54 Q86,66 78,74 Q80,86 72,96 Q68,100 64,92 Q62,86 60,78 Q58,86 56,92 Q52,100 48,96 Q40,86 42,74 Q34,66 32,54 Q28,40 34,28 Z";
   if (zoneKey === "safe") {
     return `
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         ${defs}
         <g filter="url(#mg-shadow)">
-          <path d="${molarPath}" fill="url(#mg-safe)" stroke="#a7f3d0" stroke-width="2.5" stroke-linejoin="round"/>
-          <ellipse cx="42" cy="30" rx="6" ry="4" fill="#ffffff" opacity="0.85" transform="rotate(-20 42 30)"/>
-          <circle cx="48" cy="41" r="4.6" fill="#1e293b"/>
-          <circle cx="72" cy="41" r="4.6" fill="#1e293b"/>
-          <circle cx="49.4" cy="39.2" r="1.5" fill="#ffffff"/>
-          <circle cx="73.4" cy="39.2" r="1.5" fill="#ffffff"/>
-          <path d="M47 49 Q60 57 73 49" stroke="#1e293b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-          <circle cx="39" cy="45" r="4.8" fill="#fda4af" opacity="0.55"/>
-          <circle cx="81" cy="45" r="4.8" fill="#fda4af" opacity="0.55"/>
+          <path d="${toothPath}" fill="url(#mg-safe)" stroke="#a7f3d0" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="42" cy="28" rx="7" ry="4.5" fill="#ffffff" opacity="0.85" transform="rotate(-20 42 28)"/>
+          <circle cx="38" cy="50" r="5.5" fill="#fda4af" opacity="0.6"/>
+          <circle cx="82" cy="50" r="5.5" fill="#fda4af" opacity="0.6"/>
+          <circle cx="48" cy="44" r="5.2" fill="#1e293b"/>
+          <circle cx="72" cy="44" r="5.2" fill="#1e293b"/>
+          <circle cx="46" cy="41.5" r="1.8" fill="#ffffff"/>
+          <circle cx="74" cy="41.5" r="1.8" fill="#ffffff"/>
+          <circle cx="50" cy="46.5" r="0.9" fill="#ffffff" opacity="0.85"/>
+          <circle cx="70.5" cy="46.5" r="0.9" fill="#ffffff" opacity="0.85"/>
+          <path d="M46 55 Q60 66 74 55" stroke="#1e293b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
         </g>
         <path d="M96 14 l3 7.2 7.2 3-7.2 3-3 7.2-3-7.2-7.2-3 7.2-3z" fill="#fbbf24"/>
-        <path d="M18 60 l1.8 4.4 4.4 1.8-4.4 1.8-1.8 4.4-1.8-4.4-4.4-1.8 4.4-1.8z" fill="#fbbf24" opacity="0.85"/>
+        <path d="M18 62c-3-4-9-2-9 2 0 4 9 9 9 9s9-5 9-9c0-4-6-6-9-2z" fill="#fda4af" opacity="0.85"/>
       </svg>
     `;
   }
@@ -759,15 +776,15 @@ function renderMascotSvg(zoneKey, size) {
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         ${defs}
         <g filter="url(#mg-shadow)">
-          <path d="${molarPath}" fill="url(#mg-caution)" stroke="#f5c451" stroke-width="2.5" stroke-linejoin="round"/>
-          <ellipse cx="42" cy="30" rx="6" ry="4" fill="#ffffff" opacity="0.75" transform="rotate(-20 42 30)"/>
-          <path d="M43 34 q5-4.5 10 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
-          <path d="M67 34 q5-4.5 10 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
-          <circle cx="48" cy="42" r="4.2" fill="#1e293b"/>
-          <circle cx="72" cy="42" r="4.2" fill="#1e293b"/>
-          <circle cx="49.2" cy="40.4" r="1.4" fill="#ffffff"/>
-          <circle cx="73.2" cy="40.4" r="1.4" fill="#ffffff"/>
-          <path d="M47 54 Q60 50 73 54" stroke="#1e293b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+          <path d="${toothPath}" fill="url(#mg-caution)" stroke="#f5c451" stroke-width="2.5" stroke-linejoin="round"/>
+          <ellipse cx="42" cy="28" rx="7" ry="4.5" fill="#ffffff" opacity="0.75" transform="rotate(-20 42 28)"/>
+          <path d="M42 36 q6-5 12 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <path d="M66 36 q6-5 12 0" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+          <circle cx="48" cy="45" r="4.6" fill="#1e293b"/>
+          <circle cx="72" cy="45" r="4.6" fill="#1e293b"/>
+          <circle cx="49.4" cy="43" r="1.6" fill="#ffffff"/>
+          <circle cx="73.4" cy="43" r="1.6" fill="#ffffff"/>
+          <path d="M47 58 Q60 54 73 58" stroke="#1e293b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
         </g>
         <path d="M91 20 q5.5 7 0 14 q-5.5-1.8-3.2-9 q0.9-3.5 3.2-5z" fill="#38bdf8"/>
       </svg>
@@ -777,21 +794,17 @@ function renderMascotSvg(zoneKey, size) {
     <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
       ${defs}
       <g filter="url(#mg-shadow)">
-        <circle cx="60" cy="66" r="30" fill="url(#mg-danger)"/>
-        <circle cx="33" cy="46" r="9" fill="url(#mg-danger)"/>
-        <circle cx="87" cy="46" r="9" fill="url(#mg-danger)"/>
-        <circle cx="36" cy="90" r="8" fill="url(#mg-danger)"/>
-        <circle cx="84" cy="90" r="8" fill="url(#mg-danger)"/>
-        <circle cx="60" cy="32" r="8" fill="url(#mg-danger)"/>
-        <ellipse cx="46" cy="55" rx="6" ry="4" fill="#ffffff" opacity="0.35" transform="rotate(-20 46 55)"/>
-        <circle cx="47" cy="60" r="6" fill="#ffffff"/>
-        <circle cx="73" cy="60" r="6" fill="#ffffff"/>
-        <circle cx="48" cy="61.5" r="2.8" fill="#1e293b"/>
-        <circle cx="74" cy="61.5" r="2.8" fill="#1e293b"/>
-        <path d="M42 50 l9 3" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
-        <path d="M78 50 l-9 3" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
-        <path d="M46 80 Q60 71 74 80" stroke="#ffffff" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <path d="${toothPath}" fill="url(#mg-danger)" stroke="#fca5a5" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M43 30 L54 37" stroke="#1e293b" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M77 30 L66 37" stroke="#1e293b" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="48" cy="45" r="4.2" fill="#1e293b"/>
+        <circle cx="72" cy="45" r="4.2" fill="#1e293b"/>
+        <circle cx="49.2" cy="43.2" r="1.4" fill="#ffffff"/>
+        <circle cx="73.2" cy="43.2" r="1.4" fill="#ffffff"/>
+        <path d="M44 52c-1.6 2.2-1.6 4.4 0 6s3.8 1.6 3.8-1c0-2.2-3.8-5-3.8-5z" fill="#7dd3fc"/>
+        <ellipse cx="60" cy="60" rx="6.5" ry="8" fill="#1e293b"/>
       </g>
+      <path d="M90 22 q6 7.5 0 15 q-6-2-3.5-9.5 q1-3.8 3.5-5.5z" fill="#38bdf8"/>
     </svg>
   `;
 }
@@ -1545,6 +1558,26 @@ function triggerCelebration(emoji, text) {
   }, 2200);
 }
 
+/* マスコットをタップしたときに、うれしそうなキラキラ・ハートを数個ふわっと飛ばす。
+   state更新やrender()を伴わない演出専用の関数なので、直接DOMへ追加・削除する */
+function spawnMascotSparkles(container) {
+  const symbols = ["✨", "💛", "⭐", "💕"];
+  for (let i = 0; i < 4; i++) {
+    const angle = -90 + (Math.random() * 140 - 70);
+    const dist = 34 + Math.random() * 18;
+    const dx = Math.cos((angle * Math.PI) / 180) * dist;
+    const dy = Math.sin((angle * Math.PI) / 180) * dist;
+    const span = document.createElement("span");
+    span.className = "mascot-sparkle";
+    span.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    span.style.setProperty("--dx", `${dx}px`);
+    span.style.setProperty("--dy", `${dy}px`);
+    span.style.animationDelay = `${i * 40}ms`;
+    container.appendChild(span);
+    setTimeout(() => span.remove(), 950);
+  }
+}
+
 function todayRecords() {
   return state.records.filter((r) => r.profileId === state.activeProfileId && isSameDay(r.time, state.now));
 }
@@ -1649,7 +1682,9 @@ function renderHome() {
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
         <div class="mascot-hero-body">
-          ${renderMascotSvg(zone.key, 84)}
+          <button class="mascot-tap-target" data-action="tap-mascot" aria-label="マスコットをタップ">
+            ${renderMascotSvg(zone.key, 84)}
+          </button>
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
         <div class="ph-detail">
@@ -2359,6 +2394,17 @@ document.addEventListener("click", (e) => {
       saveSettings();
       render();
       break;
+    case "tap-mascot": {
+      const svg = el.querySelector("svg");
+      if (svg) {
+        svg.classList.remove("tap-bounce");
+        void svg.getBoundingClientRect();
+        svg.classList.add("tap-bounce");
+        svg.addEventListener("animationend", () => svg.classList.remove("tap-bounce"), { once: true });
+      }
+      spawnMascotSparkles(el);
+      break;
+    }
     case "open-home-info":
       state.showHomeInfo = true;
       render();
