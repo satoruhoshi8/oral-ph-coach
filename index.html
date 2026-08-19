@@ -588,6 +588,53 @@ function activeAgeGroup() {
 }
 
 /* ナビゲーションや設定ボタン用のラインアイコン。currentColorで塗るのでボタンのcolorに自動追従する */
+function getPhExplanationChild(zone) {
+  switch (zone.key) {
+    case "safe":
+      return {
+        status: "おくちのなか、いまげんきだよ！ばいきんもおとなしいみたい。",
+        worsens: "ここであまいものをたべると、またばいきんがげんきになっちゃうよ。",
+        helps: "なにもしなくてもだいじょうぶ。つぎのおやつまでじかんをあけると、もっといいよ。",
+      };
+    case "caution":
+      return {
+        status: "はのおもてが、ちょっとよわくなってきたよ。ばいきんとつばの、たたかいちゅう！",
+        worsens: "ここでまた、あまい・すっぱいものをたべると、ばいきんがげんきになっちゃうよ。",
+        helps: "おみずやおちゃで、おくちをゆすいでみよう！つばのちからで、もとにもどるよ。",
+      };
+    default:
+      return {
+        status: "ばいきんが、げんきいっぱいになってるよ！はがとけちゃうかも…！",
+        worsens: "ここでもっとたべると、はがとけるじかんが、ながくなっちゃうよ。",
+        helps: "いま「はみがきした」をおすと、ばいきんをやっつけられるよ！",
+      };
+  }
+}
+
+function getPhExplanation(zone) {
+  if (activeAgeGroup() === "child") return getPhExplanationChild(zone);
+  switch (zone.key) {
+    case "safe":
+      return {
+        status: "唾液の働きで、お口の中は安定した中性に保たれています。歯からミネラルが溶け出す「脱灰」はほとんど起きていない状態です。",
+        worsens: "ここで甘いものや酸っぱいものを摂ると、pHは急に下がり、また危険域に向かいます。",
+        helps: "とくに何もしなくても安定していきますが、次の間食までなるべく時間を空けるほど、この良い状態を長く保てます。",
+      };
+    case "caution":
+      return {
+        status: "歯の表面がやや酸性に傾いています。歯が溶け出す「脱灰」と、唾液が修復する「再石灰化」がせめぎ合っている境界の状態です。",
+        worsens: "このタイミングでさらに甘いもの・酸っぱいものを追加すると、pHがより深く・長く危険域にとどまりやすくなります。",
+        helps: "水やお茶でお口をゆすぐと酸を薄める助けになります。このまま何も食べなければ、唾液の力で自然に回復していきます。",
+      };
+    default:
+      return {
+        status: "歯の表面のエナメル質からミネラルが溶け出す「脱灰」が優勢になっています。pHが" + DANGER_PH + "を下回ると、この反応が急速に進むといわれています。",
+        worsens: "この状態でさらに間食を重ねると、脱灰が進む時間がどんどん延びて、むし歯のリスクが高まります。",
+        helps: "歯の表面が柔らかくなっているため強くこすらず、まず水やお茶でゆすぎましょう。今「🪥歯磨きした」やフッ素などのケアを記録すると、酸の影響を大きく減らせます。",
+      };
+  }
+}
+
 function navIcon(name) {
   const icons = {
     home: `<path d="M4 11.5 12 4.5l8 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10.2v8.3a1 1 0 0 0 1 1h3.5v-5h3v5H17a1 1 0 0 0 1-1v-8.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
@@ -1437,7 +1484,7 @@ const state = {
   activeProfileId: savedProfiles.activeProfileId,
   screen: "home",
   showModal: false,
-  showHomeStats: false,
+  showHomeInfo: false,
   showMoreMenu: false,
   showProtectModal: false,
   showProfileModal: false,
@@ -1583,13 +1630,11 @@ function renderHome() {
   const zone = getZone(ph);
   const dangerPct = ((DANGER_PH - PH_MIN) / (PH_MAX - PH_MIN)) * 100;
   const pct = Math.max(0, Math.min(100, ((ph - PH_MIN) / (PH_MAX - PH_MIN)) * 100));
-  const lastRecord = records.length ? records[records.length - 1] : null;
 
   const cooldown = brushCooldownRemainMs();
   const brushDisabled = cooldown > 0;
   const brushLabel = `${smartIcon("toothbrush", "🪥", 22)} ${brushDisabled ? "歯磨き済み" : "歯磨きした"}`;
 
-  const dangerMinToday = todayDangerMinutes();
   const myRecords = activeProfileRecords();
   const streak = computeGoodDayStreak(myRecords, state.now);
   const favorites = activeProfileFavorites();
@@ -1600,28 +1645,13 @@ function renderHome() {
     <div class="screen">
       <div class="card mascot-hero">
         <div class="row-between">
-          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="toggle-home-stats" aria-expanded="${state.showHomeStats}" aria-label="くわしい情報">${iconGlyph("info", 18)}</button></span>
+          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="open-home-info" aria-haspopup="true" aria-label="くわしい情報">${iconGlyph("info", 18)}</button></span>
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
         <div class="mascot-hero-body">
           ${renderMascotSvg(zone.key, 84)}
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
-        ${state.showHomeStats ? `
-          <div class="ph-detail">
-            <div class="row-between">
-              <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
-              <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
-                ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
-              </span>
-            </div>
-            <div class="row-between" style="margin-top:10px;">
-              <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
-              <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
-            </div>
-            <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
-          </div>
-        ` : ""}
         <div class="ph-detail">
           <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
           <div class="gauge-track" aria-hidden="true">
@@ -1675,6 +1705,42 @@ function renderHome() {
           <button class="reminder-dismiss" data-action="add-brush" aria-label="歯磨きを記録">${smartIcon("toothbrush", "🪥", 26)}</button>
         </div>
       ` : ""}
+    </div>
+  `;
+}
+
+function renderHomeInfoModal() {
+  if (!state.showHomeInfo) return "";
+  const records = todayRecords();
+  const ph = calcPh(records, state.now);
+  const zone = getZone(ph);
+  const exp = getPhExplanation(zone);
+  const lastRecord = records.length ? records[records.length - 1] : null;
+  const dangerMinToday = todayDangerMinutes();
+  const isChild = activeAgeGroup() === "child";
+  return `
+    <div class="modal-overlay" data-action="close-home-info">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>${isChild ? "いまのようす、くわしく" : "今の様子、くわしく"}</h2>
+          <button class="modal-close" data-action="close-home-info" aria-label="閉じる">×</button>
+        </div>
+        <p class="explain-status">${exp.status}</p>
+        <div class="explain-row">${iconGlyph("warning", 20)}<p>${exp.worsens}</p></div>
+        <div class="explain-row">${iconGlyph("check", 20)}<p>${exp.helps}</p></div>
+        <div class="ph-detail-divider"></div>
+        <div class="row-between">
+          <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
+          <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
+            ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
+          </span>
+        </div>
+        <div class="row-between" style="margin-top:10px;">
+          <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
+          <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+        </div>
+        <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
+      </div>
     </div>
   `;
 }
@@ -2154,6 +2220,7 @@ function render() {
     ${renderProfileModal()}
     ${renderProfileSwitcherModal()}
     ${renderMoreMenu()}
+    ${renderHomeInfoModal()}
     ${renderDailyFeedbackModal()}
   `;
 }
@@ -2163,7 +2230,7 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   const action = el.dataset.action;
 
-  if ((action === "close-modal" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal" || action === "close-profile-switcher" || action === "close-more-menu") && e.target !== el) return;
+  if ((action === "close-modal" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal" || action === "close-profile-switcher" || action === "close-more-menu" || action === "close-home-info") && e.target !== el) return;
 
   switch (action) {
     case "close-daily-feedback":
@@ -2292,8 +2359,12 @@ document.addEventListener("click", (e) => {
       saveSettings();
       render();
       break;
-    case "toggle-home-stats":
-      state.showHomeStats = !state.showHomeStats;
+    case "open-home-info":
+      state.showHomeInfo = true;
+      render();
+      break;
+    case "close-home-info":
+      state.showHomeInfo = false;
       render();
       break;
     case "go-home":
