@@ -150,6 +150,7 @@
   .mascot-hero-caption { margin: 0; font-size:0.9375rem; font-weight: 700; color: var(--slate-800); text-align: center; line-height: 1.4; }
   .detail-toggle { display: block; margin: 6px auto 0; background: none; border: none; font-size:0.75rem; font-weight: 700; color: var(--teal-dark); }
   .ph-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-100); }
+  .ph-detail-divider { height: 1px; background: var(--slate-100); margin: 14px 0; }
   @keyframes mascot-float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
@@ -1398,7 +1399,7 @@ function renderHome() {
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
         <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
-          ${state.showPhDetail ? (isChild ? "とじる ▲" : "数値を閉じる ▲") : (isChild ? "すうじをみる ▾" : "くわしい数値を見る ▾")}
+          ${state.showPhDetail ? (isChild ? "とじる ▲" : "くわしく見る ▲") : (isChild ? "もっとみる ▾" : "もっと見る ▾")}
         </button>
         ${state.showPhDetail ? `
           <div class="ph-detail">
@@ -1408,29 +1409,24 @@ function renderHome() {
               <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
             </div>
             <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
+            <div class="ph-detail-divider"></div>
+            <p class="explain-status">${exp.status}</p>
+            <div class="explain-row"><span aria-hidden="true">⚠️</span><p>${exp.worsens}</p></div>
+            <div class="explain-row"><span aria-hidden="true">✅</span><p>${exp.helps}</p></div>
+            <div class="ph-detail-divider"></div>
+            <div class="row-between">
+              <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
+              <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
+                ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
+              </span>
+            </div>
+            <div class="row-between" style="margin-top:10px;">
+              <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
+              <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+            </div>
+            <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
           </div>
         ` : ""}
-      </div>
-
-      <div class="card">
-        <p class="explain-status">${exp.status}</p>
-        <div class="explain-row"><span aria-hidden="true">⚠️</span><p>${exp.worsens}</p></div>
-        <div class="explain-row"><span aria-hidden="true">✅</span><p>${exp.helps}</p></div>
-      </div>
-
-      <div class="card row-between">
-        <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
-        <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
-          ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
-        </span>
-      </div>
-
-      <div class="card">
-        <div class="row-between">
-          <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
-          <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
-        </div>
-        <p style="margin:8px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
       </div>
 
       ${renderTodayChecklist(records)}
@@ -1477,7 +1473,6 @@ function renderHome() {
         <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
         <button class="secondary-btn" data-action="open-protect-modal">🧪 歯を守るケアを記録</button>
       </div>
-      <p class="hint">記録するたびに、ステファンカーブの考え方でpHの変化がシミュレーションされます。</p>
     </div>
   `;
 }
