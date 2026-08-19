@@ -498,44 +498,83 @@ function getPhExplanation(zone) {
 
 function renderMascotSvg(zoneKey, size) {
   const s = size || 56;
+  const defs = `
+    <defs>
+      <linearGradient id="mg-safe" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="100%" stop-color="#dcfce7"/>
+      </linearGradient>
+      <linearGradient id="mg-caution" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fffbeb"/>
+        <stop offset="100%" stop-color="#fde68a"/>
+      </linearGradient>
+      <radialGradient id="mg-danger" cx="38%" cy="32%" r="75%">
+        <stop offset="0%" stop-color="#a78bfa"/>
+        <stop offset="100%" stop-color="#6d28d9"/>
+      </radialGradient>
+      <filter id="mg-shadow" x="-30%" y="-20%" width="160%" height="150%">
+        <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.18"/>
+      </filter>
+    </defs>
+  `;
   if (zoneKey === "safe") {
     return `
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
-        <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-        <circle cx="50" cy="45" r="4" fill="#0f172a"/>
-        <circle cx="70" cy="45" r="4" fill="#0f172a"/>
-        <path d="M48 58 Q60 68 72 58" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <circle cx="40" cy="54" r="5" fill="#fca5a5" opacity="0.6"/>
-        <circle cx="80" cy="54" r="5" fill="#fca5a5" opacity="0.6"/>
-        <path d="M92 18 l3 7 7 3 -7 3 -3 7 -3-7-7-3 7-3z" fill="#fbbf24"/>
+        ${defs}
+        <g filter="url(#mg-shadow)">
+          <path d="M60 14c-17 0-27.5 12.5-27.5 29 0 20.5 8.5 41 14.5 53.5 3.2 6.7 6.4 10.5 13 10.5s9.8-3.8 13-10.5c6-12.5 14.5-33 14.5-53.5 0-16.5-10.5-29-27.5-29z" fill="url(#mg-safe)" stroke="#a7f3d0" stroke-width="2.5"/>
+          <ellipse cx="45" cy="30" rx="7" ry="4.5" fill="#ffffff" opacity="0.85" transform="rotate(-25 45 30)"/>
+          <circle cx="48.5" cy="48" r="5" fill="#1e293b"/>
+          <circle cx="71.5" cy="48" r="5" fill="#1e293b"/>
+          <circle cx="50" cy="46" r="1.6" fill="#ffffff"/>
+          <circle cx="73" cy="46" r="1.6" fill="#ffffff"/>
+          <path d="M47 61 Q60 72 73 61" stroke="#1e293b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          <circle cx="38" cy="57" r="5.5" fill="#fda4af" opacity="0.55"/>
+          <circle cx="82" cy="57" r="5.5" fill="#fda4af" opacity="0.55"/>
+        </g>
+        <path d="M93 16 l3.2 7.8 7.8 3.2-7.8 3.2-3.2 7.8-3.2-7.8-7.8-3.2 7.8-3.2z" fill="#fbbf24"/>
+        <path d="M23 66 l2 4.8 4.8 2-4.8 2-2 4.8-2-4.8-4.8-2 4.8-2z" fill="#fbbf24" opacity="0.85"/>
       </svg>
     `;
   }
   if (zoneKey === "caution") {
     return `
       <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
-        <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#fef9c3" stroke="#eab308" stroke-width="2"/>
-        <circle cx="50" cy="45" r="4" fill="#0f172a"/>
-        <circle cx="70" cy="45" r="4" fill="#0f172a"/>
-        <path d="M46 63 Q53 58 60 63 T74 63" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <path d="M86 26 q5 7 0 14 q-5-2-3-9 q1-3 3-5z" fill="#38bdf8"/>
+        ${defs}
+        <g filter="url(#mg-shadow)">
+          <path d="M60 14c-17 0-27.5 12.5-27.5 29 0 20.5 8.5 41 14.5 53.5 3.2 6.7 6.4 10.5 13 10.5s9.8-3.8 13-10.5c6-12.5 14.5-33 14.5-53.5 0-16.5-10.5-29-27.5-29z" fill="url(#mg-caution)" stroke="#f5c451" stroke-width="2.5"/>
+          <ellipse cx="45" cy="30" rx="7" ry="4.5" fill="#ffffff" opacity="0.75" transform="rotate(-25 45 30)"/>
+          <path d="M43 42 q5.5-5 11 0" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M66 42 q5.5-5 11 0" stroke="#1e293b" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="48.5" cy="49" r="4.6" fill="#1e293b"/>
+          <circle cx="71.5" cy="49" r="4.6" fill="#1e293b"/>
+          <circle cx="50" cy="47" r="1.5" fill="#ffffff"/>
+          <circle cx="73" cy="47" r="1.5" fill="#ffffff"/>
+          <path d="M47 65 Q60 61 73 65" stroke="#1e293b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        </g>
+        <path d="M88 24 q6 8 0 16 q-6-2-3.5-10 q1-4 3.5-6z" fill="#38bdf8"/>
       </svg>
     `;
   }
   return `
     <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
-      <circle cx="60" cy="65" r="32" fill="#7c3aed"/>
-      <circle cx="30" cy="42" r="8" fill="#7c3aed"/>
-      <circle cx="90" cy="42" r="8" fill="#7c3aed"/>
-      <circle cx="34" cy="92" r="7" fill="#7c3aed"/>
-      <circle cx="86" cy="92" r="7" fill="#7c3aed"/>
-      <circle cx="60" cy="30" r="7" fill="#7c3aed"/>
-      <circle cx="48" cy="58" r="5" fill="#fff"/>
-      <circle cx="72" cy="58" r="5" fill="#fff"/>
-      <circle cx="48" cy="59" r="2.4" fill="#0f172a"/>
-      <circle cx="72" cy="59" r="2.4" fill="#0f172a"/>
-      <path d="M44 78 Q60 90 76 78" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M50 81 l2 6 M60 84 l0 7 M70 81 l-2 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      ${defs}
+      <g filter="url(#mg-shadow)">
+        <circle cx="60" cy="66" r="30" fill="url(#mg-danger)"/>
+        <circle cx="33" cy="46" r="9" fill="url(#mg-danger)"/>
+        <circle cx="87" cy="46" r="9" fill="url(#mg-danger)"/>
+        <circle cx="36" cy="90" r="8" fill="url(#mg-danger)"/>
+        <circle cx="84" cy="90" r="8" fill="url(#mg-danger)"/>
+        <circle cx="60" cy="32" r="8" fill="url(#mg-danger)"/>
+        <ellipse cx="46" cy="55" rx="6" ry="4" fill="#ffffff" opacity="0.35" transform="rotate(-20 46 55)"/>
+        <circle cx="47" cy="60" r="6" fill="#ffffff"/>
+        <circle cx="73" cy="60" r="6" fill="#ffffff"/>
+        <circle cx="48" cy="61.5" r="2.8" fill="#1e293b"/>
+        <circle cx="74" cy="61.5" r="2.8" fill="#1e293b"/>
+        <path d="M42 50 l9 3" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M78 50 l-9 3" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M46 80 Q60 71 74 80" stroke="#ffffff" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      </g>
     </svg>
   `;
 }
