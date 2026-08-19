@@ -275,6 +275,13 @@
   .profile-current-btn .profile-name { font-size:0.75rem; font-weight: 700; color: var(--slate-700); max-width: 6rem; }
   .profile-current-btn .profile-switch-chevron { font-size:0.625rem; color: var(--slate-400); }
 
+  .more-menu-list { display: flex; flex-direction: column; gap: 4px; }
+  .more-menu-item { display: flex; align-items: center; gap: 14px; padding: 14px 6px; background: none; border: none; border-bottom: 1px solid var(--slate-100); text-align: left; }
+  .more-menu-item:last-child { border-bottom: none; }
+  .nav-icon-svg-wrap { display: flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 999px; background: var(--accent-soft-bg); color: var(--teal-dark); flex-shrink: 0; }
+  .more-menu-label { display: block; font-size:0.9375rem; font-weight: 700; color: var(--slate-800); }
+  .more-menu-desc { display: block; font-size:0.75rem; color: var(--slate-500); margin-top: 2px; }
+
   .profile-switcher { display: flex; gap: 10px; flex-wrap: wrap; }
   .profile-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; padding: 6px 4px; flex-shrink: 0; width: 3.75rem; }
   .profile-avatar { width: 2.5rem; height: 2.5rem; border-radius: 999px; background: var(--slate-50); border: 2px solid transparent; display: flex; align-items: center; justify-content: center; font-size:1.25rem; flex-shrink: 0; }
@@ -580,53 +587,6 @@ function activeAgeGroup() {
   return p && p.ageGroup === "child" ? "child" : "adult";
 }
 
-function getPhExplanationChild(zone) {
-  switch (zone.key) {
-    case "safe":
-      return {
-        status: "おくちのなか、いまげんきだよ！ばいきんもおとなしいみたい。",
-        worsens: "ここであまいものをたべると、またばいきんがげんきになっちゃうよ。",
-        helps: "なにもしなくてもだいじょうぶ。つぎのおやつまでじかんをあけると、もっといいよ。",
-      };
-    case "caution":
-      return {
-        status: "はのおもてが、ちょっとよわくなってきたよ。ばいきんとつばの、たたかいちゅう！",
-        worsens: "ここでまた、あまい・すっぱいものをたべると、ばいきんがげんきになっちゃうよ。",
-        helps: "おみずやおちゃで、おくちをゆすいでみよう！つばのちからで、もとにもどるよ。",
-      };
-    default:
-      return {
-        status: "ばいきんが、げんきいっぱいになってるよ！はがとけちゃうかも…！",
-        worsens: "ここでもっとたべると、はがとけるじかんが、ながくなっちゃうよ。",
-        helps: "いま「はみがきした」をおすと、ばいきんをやっつけられるよ！",
-      };
-  }
-}
-
-function getPhExplanation(zone) {
-  if (activeAgeGroup() === "child") return getPhExplanationChild(zone);
-  switch (zone.key) {
-    case "safe":
-      return {
-        status: "唾液の働きで、お口の中は安定した中性に保たれています。歯からミネラルが溶け出す「脱灰」はほとんど起きていない状態です。",
-        worsens: "ここで甘いものや酸っぱいものを摂ると、pHは急に下がり、また危険域に向かいます。",
-        helps: "とくに何もしなくても安定していきますが、次の間食までなるべく時間を空けるほど、この良い状態を長く保てます。",
-      };
-    case "caution":
-      return {
-        status: "歯の表面がやや酸性に傾いています。歯が溶け出す「脱灰」と、唾液が修復する「再石灰化」がせめぎ合っている境界の状態です。",
-        worsens: "このタイミングでさらに甘いもの・酸っぱいものを追加すると、pHがより深く・長く危険域にとどまりやすくなります。",
-        helps: "水やお茶でお口をゆすぐと酸を薄める助けになります。このまま何も食べなければ、唾液の力で自然に回復していきます。",
-      };
-    default:
-      return {
-        status: "歯の表面のエナメル質からミネラルが溶け出す「脱灰」が優勢になっています。pHが" + DANGER_PH + "を下回ると、この反応が急速に進むといわれています。",
-        worsens: "この状態でさらに間食を重ねると、脱灰が進む時間がどんどん延びて、むし歯のリスクが高まります。",
-        helps: "歯の表面が柔らかくなっているため強くこすらず、まず水やお茶でゆすぎましょう。今「🪥歯磨きした」やフッ素などのケアを記録すると、酸の影響を大きく減らせます。",
-      };
-  }
-}
-
 /* ナビゲーションや設定ボタン用のラインアイコン。currentColorで塗るのでボタンのcolorに自動追従する */
 function navIcon(name) {
   const icons = {
@@ -636,6 +596,7 @@ function navIcon(name) {
     history: `<rect x="4" y="5.5" width="16" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16" stroke="currentColor" stroke-width="1.8"/><path d="M8 3.6v3.6M16 3.6v3.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
     help: `<circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.5 2.3c-.9.5-1.3 1-1.3 2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="17.1" r="1" fill="currentColor" stroke="none"/>`,
     settings: `<line x1="4" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="12.5" x2="20" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="12.5" r="2.1" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="18" r="2.1" fill="currentColor" stroke="none"/>`,
+    more: `<circle cx="6" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18" cy="12" r="1.9" fill="currentColor"/>`,
   };
   return `<svg class="nav-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${icons[name] || ""}</svg>`;
 }
@@ -1476,7 +1437,8 @@ const state = {
   activeProfileId: savedProfiles.activeProfileId,
   screen: "home",
   showModal: false,
-  showInfo: false,
+  showHomeStats: false,
+  showMoreMenu: false,
   showProtectModal: false,
   showProfileModal: false,
   editingProfileId: null,
@@ -1619,7 +1581,6 @@ function renderHome() {
   const records = todayRecords();
   const ph = calcPh(records, state.now);
   const zone = getZone(ph);
-  const exp = getPhExplanation(zone);
   const dangerPct = ((DANGER_PH - PH_MIN) / (PH_MAX - PH_MIN)) * 100;
   const pct = Math.max(0, Math.min(100, ((ph - PH_MIN) / (PH_MAX - PH_MIN)) * 100));
   const lastRecord = records.length ? records[records.length - 1] : null;
@@ -1639,13 +1600,28 @@ function renderHome() {
     <div class="screen">
       <div class="card mascot-hero">
         <div class="row-between">
-          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">${iconGlyph("info", 18)}</button></span>
+          <span class="label-sm">${isChild ? "いまのようす" : "今の様子"}<button class="info-btn" data-action="toggle-home-stats" aria-expanded="${state.showHomeStats}" aria-label="くわしい情報">${iconGlyph("info", 18)}</button></span>
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
         <div class="mascot-hero-body">
           ${renderMascotSvg(zone.key, 84)}
           <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
         </div>
+        ${state.showHomeStats ? `
+          <div class="ph-detail">
+            <div class="row-between">
+              <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
+              <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
+                ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
+              </span>
+            </div>
+            <div class="row-between" style="margin-top:10px;">
+              <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
+              <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
+            </div>
+            <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
+          </div>
+        ` : ""}
         <div class="ph-detail">
           <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
           <div class="gauge-track" aria-hidden="true">
@@ -1659,24 +1635,6 @@ function renderHome() {
           <button class="secondary-btn" data-action="add-brush" ${brushDisabled ? "disabled" : ""}>${brushLabel}</button>
           <button class="secondary-btn" data-action="open-protect-modal">${smartIcon("shield", "🧪", 22)} 歯を守るケアを記録</button>
         </div>
-      </div>
-
-      <div class="card">
-        <p class="explain-status">${exp.status}</p>
-        <div class="explain-row">${iconGlyph("warning", 20)}<p>${exp.worsens}</p></div>
-        <div class="explain-row">${iconGlyph("check", 20)}<p>${exp.helps}</p></div>
-        <div class="ph-detail-divider"></div>
-        <div class="row-between">
-          <span class="label-sm">${isChild ? "さいごのきろくから" : "最後の記録からの経過"}</span>
-          <span style="font-size:0.875rem;font-weight:700;color:var(--slate-700);">
-            ${lastRecord ? formatElapsed(state.now - lastRecord.time) : (isChild ? "きろくなし" : "記録なし")}
-          </span>
-        </div>
-        <div class="row-between" style="margin-top:10px;">
-          <span class="label-sm">${isChild ? "きょう、ばいきんがげんきだったじかん" : `今日、危険域(pH${DANGER_PH}未満)にいた時間`}</span>
-          <span style="font-size:0.875rem;font-weight:800;color:${dangerMinToday > GOOD_DAY_MAX_DANGER_MIN ? "var(--red)" : "var(--slate-700)"};">${dangerMinToday}分</span>
-        </div>
-        <p style="margin:6px 0 0;font-size:0.75rem;color:var(--slate-500);">${isChild ? `もくひょう: ${GOOD_DAY_MAX_DANGER_MIN}ぷんいないに できるかな？` : `目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう`}</p>
       </div>
 
       ${renderTodayChecklist(records)}
@@ -2018,84 +1976,6 @@ function renderProtectModal() {
   `;
 }
 
-function renderInfoModalChild() {
-  return `
-    <div class="modal-head">
-      <h2>はが とけたり なおったり するのは なぜ？</h2>
-      <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 むしばきん</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          あまいものをたべると、おくちのなかのばいきんが「さん」というものをつくるよ。このさんが、はをとかしちゃうんだ。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 つばのちから</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          つばには、はをなおすちからがあるよ。とけたはを、すこしずつもとにもどしてくれるんだ。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらいで やばいの？</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          いちどだけなら、だいじょうぶ。でも、なんかいもおやつをたべたり、はみがきをわすれたりすると、はがとけるじかんがながくなっちゃうよ。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          たべるかいすうと、じかんのあけかた、はみがきのタイミングが、たいせつだよ！
-        </p>
-      </div>
-    </div>
-  `;
-}
-
-function renderInfoModalAdult() {
-  return `
-    <div class="modal-head">
-      <h2>脱灰・再石灰化ってなに？</h2>
-      <button class="modal-close" data-action="close-info" aria-label="閉じる">×</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--red);">🔻 脱灰（だっかい）</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          食べ物や飲み物に含まれる糖分をエサに、お口の中の細菌が酸を作り出します。この酸によって、歯の表面（エナメル質）からカルシウムなどのミネラルが溶け出してしまうことを「脱灰」と呼びます。pHが${DANGER_PH}を下回ると、この反応が急速に進むといわれています。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--emerald);">🔺 再石灰化（さいせっかいか）</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          唾液にはカルシウムやリンなどのミネラルが含まれていて、溶け出した歯の表面を少しずつ修復してくれます。これを「再石灰化」と呼びます。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0 0 4px;font-size:0.8125rem;font-weight:800;color:var(--slate-800);">⏱️ どれくらい続くとよくないの？</p>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          1回だけ短時間酸性に傾いても、唾液の力ですぐに回復しやすく、大きな問題にはなりにくいとされています。ただし一般的には、pHが臨界値（${DANGER_PH}）を下回る状態が1回あたり${GOOD_DAY_MAX_DANGER_MIN}分前後より長く続くと、唾液による回復が追いつきにくくなり、脱灰が優勢な時間が延びやすいといわれています。1日の中で危険域にいた時間の合計も、むし歯リスクの目安になります。ホーム画面や履歴画面の「危険域にいた時間」を参考にしてみてください。
-        </p>
-      </div>
-      <div>
-        <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-          この2つは毎日、何度も繰り返されています。脱灰の時間が長すぎたり、頻繁すぎたりして再石灰化が追いつかなくなると、むし歯につながります。だからこそ「食べる回数」と「時間の間隔」、そして「歯磨きのタイミング」が大切なのです。
-        </p>
-      </div>
-    </div>
-  `;
-}
-
-function renderInfoModal() {
-  if (!state.showInfo) return "";
-  const body = activeAgeGroup() === "child" ? renderInfoModalChild() : renderInfoModalAdult();
-  return `
-    <div class="modal-overlay" data-action="close-info">
-      <div class="modal-sheet">${body}</div>
-    </div>
-  `;
-}
-
 function renderProfileSwitcher() {
   const active = state.profiles.find((p) => p.id === state.activeProfileId);
   return `
@@ -2130,6 +2010,35 @@ function renderProfileSwitcherModal() {
             <span class="profile-avatar">＋</span>
           </button>
         </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMoreMenu() {
+  if (!state.showMoreMenu) return "";
+  const items = [
+    { action: "go-cycle", icon: "cycle", label: "サイクル", desc: "理想の食事・歯磨きの目安" },
+    { action: "go-history", icon: "history", label: "履歴", desc: "日ごとの記録をふりかえる" },
+    { action: "go-help", icon: "help", label: "ヘルプ", desc: "用語集・よくある疑問" },
+  ];
+  const rows = items.map((it) => `
+    <button class="more-menu-item" data-action="${it.action}">
+      <span class="nav-icon-svg-wrap">${navIcon(it.icon)}</span>
+      <span>
+        <span class="more-menu-label">${it.label}</span>
+        <span class="more-menu-desc">${it.desc}</span>
+      </span>
+    </button>
+  `).join("");
+  return `
+    <div class="modal-overlay" data-action="close-more-menu">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>その他のメニュー</h2>
+          <button class="modal-close" data-action="close-more-menu" aria-label="閉じる">×</button>
+        </div>
+        <div class="more-menu-list">${rows}</div>
       </div>
     </div>
   `;
@@ -2235,18 +2144,16 @@ function render() {
       <div class="nav">
         <button class="${state.screen === "home" ? "active" : ""}" data-action="go-home" aria-current="${state.screen === "home" ? "page" : "false"}">${navIcon("home")}<span>ホーム</span></button>
         <button class="${state.screen === "graph" ? "active" : ""}" data-action="go-graph" aria-current="${state.screen === "graph" ? "page" : "false"}">${navIcon("graph")}<span>グラフ</span></button>
-        <button class="${state.screen === "cycle" ? "active" : ""}" data-action="go-cycle" aria-current="${state.screen === "cycle" ? "page" : "false"}">${navIcon("cycle")}<span>サイクル</span></button>
-        <button class="${state.screen === "history" ? "active" : ""}" data-action="go-history" aria-current="${state.screen === "history" ? "page" : "false"}">${navIcon("history")}<span>履歴</span></button>
-        <button class="${state.screen === "help" ? "active" : ""}" data-action="go-help" aria-current="${state.screen === "help" ? "page" : "false"}">${navIcon("help")}<span>ヘルプ</span></button>
+        <button class="${["cycle", "history", "help"].includes(state.screen) ? "active" : ""}" data-action="open-more-menu" aria-haspopup="true" aria-expanded="${state.showMoreMenu}">${navIcon("more")}<span>その他</span></button>
       </div>
       <div class="main">${screens[state.screen]()}</div>
       <p class="disclaimer">※このグラフは一般的な研究知見（ステファンカーブ）に基づく目安のシミュレーションであり、実測値ではありません。虫歯や歯周病が気になる場合は歯科医院にご相談ください。</p>
     </div>
     ${renderModal()}
     ${renderProtectModal()}
-    ${renderInfoModal()}
     ${renderProfileModal()}
     ${renderProfileSwitcherModal()}
+    ${renderMoreMenu()}
     ${renderDailyFeedbackModal()}
   `;
 }
@@ -2256,7 +2163,7 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   const action = el.dataset.action;
 
-  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal") && e.target !== el) return;
+  if ((action === "close-modal" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal" || action === "close-profile-switcher" || action === "close-more-menu") && e.target !== el) return;
 
   switch (action) {
     case "close-daily-feedback":
@@ -2385,12 +2292,8 @@ document.addEventListener("click", (e) => {
       saveSettings();
       render();
       break;
-    case "open-info":
-      state.showInfo = true;
-      render();
-      break;
-    case "close-info":
-      state.showInfo = false;
+    case "toggle-home-stats":
+      state.showHomeStats = !state.showHomeStats;
       render();
       break;
     case "go-home":
@@ -2403,10 +2306,12 @@ document.addEventListener("click", (e) => {
       break;
     case "go-cycle":
       state.screen = "cycle";
+      state.showMoreMenu = false;
       render();
       break;
     case "go-history":
       state.screen = "history";
+      state.showMoreMenu = false;
       render();
       break;
     case "go-settings":
@@ -2415,6 +2320,15 @@ document.addEventListener("click", (e) => {
       break;
     case "go-help":
       state.screen = "help";
+      state.showMoreMenu = false;
+      render();
+      break;
+    case "open-more-menu":
+      state.showMoreMenu = true;
+      render();
+      break;
+    case "close-more-menu":
+      state.showMoreMenu = false;
       render();
       break;
     case "toggle-help-topic": {
