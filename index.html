@@ -245,6 +245,22 @@
   .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .option-pill { padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--slate-200); background: var(--slate-50); font-size:0.8125rem; font-weight: 700; color: var(--slate-700); }
   .option-pill.selected { border-color: var(--teal); background: var(--accent-soft-bg); color: var(--teal-dark); }
+
+  .profile-switcher { display: flex; gap: 8px; padding: 4px 20px 14px; overflow-x: auto; }
+  .profile-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; padding: 6px 4px; flex-shrink: 0; width: 3.5rem; }
+  .profile-avatar { width: 2.5rem; height: 2.5rem; border-radius: 999px; background: var(--slate-50); border: 2px solid transparent; display: flex; align-items: center; justify-content: center; font-size:1.25rem; flex-shrink: 0; }
+  .profile-chip.active .profile-avatar { border-color: var(--teal); background: var(--accent-soft-bg-strong); }
+  .profile-name { font-size:0.6875rem; color: var(--slate-500); max-width: 3.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .profile-chip.active .profile-name { color: var(--teal-dark); font-weight: 700; }
+  .profile-chip-add .profile-avatar { border: 1.5px dashed var(--slate-400); color: var(--slate-400); background: none; }
+
+  .avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .avatar-btn { font-size:1.5rem; padding: 10px 0; border-radius: 12px; border: 1px solid var(--slate-200); background: var(--slate-50); }
+  .avatar-btn.selected { border: 1.5px solid var(--teal); background: var(--accent-soft-bg-strong); }
+
+  .profile-list { display: flex; flex-direction: column; }
+  .profile-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--slate-100); }
+  .profile-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -312,6 +328,13 @@ function getMealType(id) {
   return MEAL_TYPES.find((m) => m.id === id);
 }
 
+/* 家族プロフィール：誰の記録かを表す。アイコンは動物・シンボル系にして年齢性別を問わないようにする */
+const PROFILE_AVATARS = ["⭐", "🐥", "🐻", "🐰", "🐱", "🦁", "🐶", "🐼", "🌸", "🍀"];
+const PROFILE_AGE_GROUPS = [
+  { id: "child", label: "お子さま" },
+  { id: "adult", label: "おとな" },
+];
+
 /* 歯を守る行動（脱灰を防ぐ・再石灰化を助ける）の記録 */
 const PROTECT_ACTIONS = [
   { id: "fluoride", label: "フッ素（洗口・歯磨き粉）", emoji: "🧪", reduction: 0.35, desc: "歯の再石灰化を助け、酸への抵抗力を高めます" },
@@ -351,6 +374,7 @@ const GOOD_DAY_MAX_DANGER_MIN = 30;
 const STORAGE_KEY = "oral_ph_coach_records_v1";
 const SETTINGS_KEY = "oral_ph_coach_settings_v1";
 const FAVORITES_KEY = "oral_ph_coach_favorites_v1";
+const PROFILES_KEY = "oral_ph_coach_profiles_v1";
 const FEEDBACK_SEEN_KEY = "oral_ph_coach_feedback_seen_v1";
 /* この時刻以降にアクセスすると「前日のふりかえり」を表示する（深夜の記録も前日扱いにするため） */
 const DAILY_FEEDBACK_HOUR = 5;
@@ -782,7 +806,8 @@ function renderTrendSvg(data) {
 }
 
 function renderHistoryScreen() {
-  if (state.records.length === 0) {
+  const myRecords = activeProfileRecords();
+  if (myRecords.length === 0) {
     return `
       <div class="screen">
         <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">記録の履歴</h2>
@@ -791,15 +816,15 @@ function renderHistoryScreen() {
     `;
   }
 
-  const grouped = groupRecordsByDay(state.records);
+  const grouped = groupRecordsByDay(myRecords);
   const keys = Array.from(grouped.keys()).sort().reverse();
-  const totalFood = state.records.filter((r) => r.type === "food").length;
-  const totalBrush = state.records.filter((r) => r.type === "brush").length;
-  const totalProtect = state.records.filter((r) => r.type === "protect").length;
+  const totalFood = myRecords.filter((r) => r.type === "food").length;
+  const totalBrush = myRecords.filter((r) => r.type === "brush").length;
+  const totalProtect = myRecords.filter((r) => r.type === "protect").length;
   const firstDate = keys[keys.length - 1].replace(/-/g, "/");
-  const longestStreak = computeLongestGoodStreak(state.records);
-  const currentStreak = computeGoodDayStreak(state.records, state.now);
-  const trendData = computeTrendData(state.records, 14);
+  const longestStreak = computeLongestGoodStreak(myRecords);
+  const currentStreak = computeGoodDayStreak(myRecords, state.now);
+  const trendData = computeTrendData(myRecords, 14);
 
   let lastMonth = "";
   const rows = keys.map((key) => {
@@ -947,6 +972,57 @@ function saveFavorites() {
   } catch (e) {}
 }
 
+const DEFAULT_PROFILE = { id: "default", name: "わたし", avatar: "⭐", ageGroup: "adult" };
+
+function loadProfiles() {
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
+      return {
+        profiles: parsed.profiles,
+        activeProfileId: parsed.activeProfileId || parsed.profiles[0].id,
+      };
+    }
+  } catch (e) {}
+  return { profiles: [DEFAULT_PROFILE], activeProfileId: DEFAULT_PROFILE.id };
+}
+
+function saveProfiles() {
+  try {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ profiles: state.profiles, activeProfileId: state.activeProfileId }));
+  } catch (e) {}
+}
+
+/* 複数プロフィール導入前に作られた記録・お気に入りをデフォルトプロフィールに割り当てる */
+function migrateProfileOwnership() {
+  let changed = false;
+  for (const r of state.records) {
+    if (!r.profileId) {
+      r.profileId = DEFAULT_PROFILE.id;
+      changed = true;
+    }
+  }
+  if (changed) saveRecords();
+
+  let favChanged = false;
+  for (const f of state.favorites) {
+    if (!f.profileId) {
+      f.profileId = DEFAULT_PROFILE.id;
+      favChanged = true;
+    }
+  }
+  if (favChanged) saveFavorites();
+}
+
+function activeProfileRecords() {
+  return state.records.filter((r) => r.profileId === state.activeProfileId);
+}
+
+function activeProfileFavorites() {
+  return state.favorites.filter((f) => f.profileId === state.activeProfileId);
+}
+
 function loadFeedbackSeen() {
   try {
     const raw = localStorage.getItem(FEEDBACK_SEEN_KEY);
@@ -975,13 +1051,21 @@ function applyTheme() {
  * アプリ状態と描画
  * ------------------------------------------------------------------ */
 const savedSettings = loadSettings();
+const savedProfiles = loadProfiles();
 const state = {
   records: loadRecords(),
   favorites: loadFavorites(),
+  profiles: savedProfiles.profiles,
+  activeProfileId: savedProfiles.activeProfileId,
   screen: "home",
   showModal: false,
   showInfo: false,
   showProtectModal: false,
+  showProfileModal: false,
+  editingProfileId: null,
+  profileDraftName: "",
+  profileDraftAvatar: PROFILE_AVATARS[0],
+  profileDraftAgeGroup: "child",
   showInstallBanner: false,
   showOnboarding: isFirstLaunch(),
   onboardingLevel: DEFAULT_DETAIL_LEVEL,
@@ -998,6 +1082,7 @@ const state = {
   now: Date.now(),
 };
 applyTheme();
+migrateProfileOwnership();
 
 /* 朝5時以降の初回アクセスなら、まだ見ていない前日のふりかえりを表示する */
 (function setupDailyFeedback() {
@@ -1005,7 +1090,7 @@ applyTheme();
   if (nowDate.getHours() < DAILY_FEEDBACK_HOUR) return;
   const todayKeyStr = dayKey(nowDate);
   if (loadFeedbackSeen().lastShownDay === todayKeyStr) return;
-  const feedback = computeYesterdayFeedback(state.now, state.records);
+  const feedback = computeYesterdayFeedback(state.now, activeProfileRecords());
   if (!feedback) return;
   state.showDailyFeedback = true;
   state.dailyFeedback = feedback;
@@ -1014,11 +1099,11 @@ applyTheme();
 let deferredInstallPrompt = null;
 
 function todayRecords() {
-  return state.records.filter((r) => isSameDay(r.time, state.now));
+  return state.records.filter((r) => r.profileId === state.activeProfileId && isSameDay(r.time, state.now));
 }
 
 function getLastBrushTime() {
-  const brushes = state.records.filter((r) => r.type === "brush");
+  const brushes = state.records.filter((r) => r.profileId === state.activeProfileId && r.type === "brush");
   return brushes.length ? Math.max(...brushes.map((r) => r.time)) : null;
 }
 
@@ -1049,7 +1134,8 @@ function renderHome() {
   const brushLabel = brushDisabled ? "🪥 歯磨き済み" : "🪥 歯磨きした";
 
   const dangerMinToday = todayDangerMinutes();
-  const streak = computeGoodDayStreak(state.records, state.now);
+  const streak = computeGoodDayStreak(activeProfileRecords(), state.now);
+  const favorites = activeProfileFavorites();
 
   return `
     <div class="screen">
@@ -1103,11 +1189,11 @@ function renderHome() {
         </div>
       ` : ""}
 
-      ${state.favorites.length ? `
+      ${favorites.length ? `
         <div class="card">
           <p class="label-sm" style="margin:0 0 8px;">⭐ よく使う組み合わせ</p>
           <div class="favorites-row">
-            ${state.favorites.map((f) => `
+            ${favorites.map((f) => `
               <div class="favorite-chip">
                 <button data-action="quick-add-favorite" data-favid="${f.id}">${f.label}</button>
                 <button class="favorite-remove" data-action="remove-favorite" data-favid="${f.id}" aria-label="お気に入りを削除">×</button>
@@ -1242,10 +1328,28 @@ function renderFontSizeOptions() {
   `;
 }
 
+function renderProfileSettingsList() {
+  const rows = state.profiles.map((p) => `
+    <div class="profile-row">
+      <span class="profile-avatar" style="width:2.25rem;height:2.25rem;font-size:1.125rem;">${p.avatar}</span>
+      <span style="flex:1;font-size:0.875rem;font-weight:700;color:var(--slate-700);">${escapeHtml(p.name)}<span style="font-weight:400;color:var(--slate-400);font-size:0.75rem;margin-left:6px;">${p.ageGroup === "child" ? "お子さま" : "おとな"}</span></span>
+      <button class="back-link" data-action="open-edit-profile" data-profileid="${p.id}">編集</button>
+    </div>
+  `).join("");
+  return `
+    <div class="profile-list">${rows}</div>
+    <button class="secondary-btn" style="margin-top:12px;" data-action="open-add-profile">＋ プロフィールを追加</button>
+  `;
+}
+
 function renderSettingsScreen() {
   return `
     <div class="screen">
       <h2 style="margin:0;font-size:1.0rem;font-weight:800;color:var(--slate-800);">設定</h2>
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 10px;">家族のプロフィール</p>
+        ${renderProfileSettingsList()}
+      </div>
       <div class="card">
         <p class="label-sm" style="margin:0 0 4px;">食事内容の記録の詳細さ</p>
         <p style="margin:0 0 14px;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
@@ -1298,7 +1402,7 @@ function renderCategoryStep() {
 
   const count = state.selectedCategories.length;
   const favKey = `${state.selectedMealType}|${state.selectedCategories.slice().sort().join(",")}`;
-  const alreadyFav = state.favorites.some((f) => f.key === favKey);
+  const alreadyFav = activeProfileFavorites().some((f) => f.key === favKey);
 
   return `
     <div class="modal-head">
@@ -1397,15 +1501,64 @@ function renderInfoModal() {
   `;
 }
 
+function renderProfileSwitcher() {
+  const chips = state.profiles.map((p) => `
+    <button class="profile-chip ${p.id === state.activeProfileId ? "active" : ""}" data-action="switch-profile" data-profileid="${p.id}" aria-pressed="${p.id === state.activeProfileId}">
+      <span class="profile-avatar">${p.avatar}</span>
+      <span class="profile-name">${escapeHtml(p.name)}</span>
+    </button>
+  `).join("");
+  return `
+    <div class="profile-switcher">
+      ${chips}
+      <button class="profile-chip profile-chip-add" data-action="open-add-profile" aria-label="プロフィールを追加">
+        <span class="profile-avatar">＋</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderProfileModal() {
+  if (!state.showProfileModal) return "";
+  const isEditing = !!state.editingProfileId;
+  const avatarButtons = PROFILE_AVATARS.map((a) => `
+    <button class="avatar-btn ${state.profileDraftAvatar === a ? "selected" : ""}" data-action="pick-profile-avatar" data-avatar="${a}" aria-pressed="${state.profileDraftAvatar === a}">${a}</button>
+  `).join("");
+  const ageButtons = PROFILE_AGE_GROUPS.map((g) => `
+    <button class="option-pill ${state.profileDraftAgeGroup === g.id ? "selected" : ""}" data-action="pick-profile-age" data-age="${g.id}" aria-pressed="${state.profileDraftAgeGroup === g.id}">${g.label}</button>
+  `).join("");
+  return `
+    <div class="modal-overlay" data-action="close-profile-modal">
+      <div class="modal-sheet">
+        <div class="modal-head">
+          <h2>${isEditing ? "プロフィールを編集" : "プロフィールを追加"}</h2>
+          <button class="modal-close" data-action="close-profile-modal" aria-label="閉じる">×</button>
+        </div>
+        <p class="label-sm" style="margin:0 0 6px;">名前</p>
+        <input id="profile-name-input" type="text" maxlength="8" placeholder="例: はると" value="${escapeHtml(state.profileDraftName)}"
+          style="width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--slate-200);background:var(--slate-50);color:var(--slate-800);font-size:0.9375rem;margin-bottom:16px;box-sizing:border-box;" />
+        <p class="label-sm" style="margin:0 0 6px;">アイコン</p>
+        <div class="avatar-grid">${avatarButtons}</div>
+        <p class="label-sm" style="margin:16px 0 6px;">タイプ</p>
+        <div class="option-row">${ageButtons}</div>
+        ${isEditing ? `<button class="back-link" style="margin-top:16px;display:block;color:var(--red);" data-action="delete-profile">このプロフィールを削除</button>` : ""}
+        <button class="cta-btn" style="margin-top:16px;" data-action="save-profile">${isEditing ? "保存する" : "追加する"}</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderDailyFeedbackModal() {
   if (!state.showDailyFeedback || !state.dailyFeedback) return "";
   const f = state.dailyFeedback;
   const dateLabel = `${f.date.getMonth() + 1}月${f.date.getDate()}日`;
+  const profile = state.profiles.find((p) => p.id === state.activeProfileId);
+  const titlePrefix = state.profiles.length > 1 && profile ? `${profile.name}の` : "";
   return `
     <div class="modal-overlay" data-action="close-daily-feedback">
       <div class="modal-sheet">
         <div class="modal-head">
-          <h2>${dateLabel}のふりかえり</h2>
+          <h2>${titlePrefix}${dateLabel}のふりかえり</h2>
           <button class="modal-close" data-action="close-daily-feedback" aria-label="閉じる">×</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:14px;">
@@ -1457,6 +1610,7 @@ function render() {
           <button class="settings-btn" data-action="go-settings" aria-label="設定">⚙️</button>
         </div>
       </div>
+      ${renderProfileSwitcher()}
       <div class="nav">
         <button class="${state.screen === "home" ? "active" : ""}" data-action="go-home" aria-current="${state.screen === "home" ? "page" : "false"}">🏠 ホーム</button>
         <button class="${state.screen === "graph" ? "active" : ""}" data-action="go-graph" aria-current="${state.screen === "graph" ? "page" : "false"}">📈 グラフ</button>
@@ -1469,6 +1623,7 @@ function render() {
     ${renderModal()}
     ${renderProtectModal()}
     ${renderInfoModal()}
+    ${renderProfileModal()}
     ${renderDailyFeedbackModal()}
   `;
 }
@@ -1478,7 +1633,7 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   const action = el.dataset.action;
 
-  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal" || action === "close-daily-feedback") && e.target !== el) return;
+  if ((action === "close-modal" || action === "close-info" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal") && e.target !== el) return;
 
   switch (action) {
     case "close-daily-feedback":
@@ -1526,11 +1681,12 @@ document.addEventListener("click", (e) => {
     case "save-favorite": {
       if (state.selectedCategories.length === 0) return;
       const key = `${state.selectedMealType}|${state.selectedCategories.slice().sort().join(",")}`;
-      if (state.favorites.some((f) => f.key === key)) return;
-      if (state.favorites.length >= 8) return;
+      const mine = activeProfileFavorites();
+      if (mine.some((f) => f.key === key)) return;
+      if (mine.length >= 8) return;
       const mealType = getMealType(state.selectedMealType);
       const label = `${mealType ? mealType.emoji : ""}${state.selectedCategories.map((id) => CATEGORY_DEFS[id].emoji).join("")}`;
-      state.favorites.push({ id: Date.now() + Math.random(), key, mealType: state.selectedMealType, categories: state.selectedCategories.slice(), label });
+      state.favorites.push({ id: Date.now() + Math.random(), key, profileId: state.activeProfileId, mealType: state.selectedMealType, categories: state.selectedCategories.slice(), label });
       saveFavorites();
       render();
       break;
@@ -1540,7 +1696,7 @@ document.addEventListener("click", (e) => {
       if (!fav) return;
       const time = Date.now();
       for (const catId of fav.categories) {
-        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: fav.mealType, time });
+        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: fav.mealType, profileId: state.activeProfileId, time });
       }
       state.now = Date.now();
       saveRecords();
@@ -1574,7 +1730,7 @@ document.addEventListener("click", (e) => {
       if (state.selectedProtects.length === 0) return;
       const time = Date.now();
       for (const pid of state.selectedProtects) {
-        state.records.push({ id: time + Math.random(), type: "protect", protectId: pid, time });
+        state.records.push({ id: time + Math.random(), type: "protect", protectId: pid, profileId: state.activeProfileId, time });
       }
       state.showProtectModal = false;
       state.selectedProtects = [];
@@ -1662,7 +1818,7 @@ document.addEventListener("click", (e) => {
       if (state.selectedCategories.length === 0) return;
       const time = Date.now();
       for (const catId of state.selectedCategories) {
-        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: state.selectedMealType, time });
+        state.records.push({ id: time + Math.random(), type: "food", category: catId, mealType: state.selectedMealType, profileId: state.activeProfileId, time });
       }
       state.showModal = false;
       state.modalStep = "mealtype";
@@ -1675,11 +1831,90 @@ document.addEventListener("click", (e) => {
     }
     case "add-brush":
       if (brushCooldownRemainMs() > 0) return;
-      state.records.push({ id: Date.now() + Math.random(), type: "brush", time: Date.now() });
+      state.records.push({ id: Date.now() + Math.random(), type: "brush", profileId: state.activeProfileId, time: Date.now() });
       state.now = Date.now();
       saveRecords();
       render();
       break;
+    case "switch-profile":
+      state.activeProfileId = el.dataset.profileid;
+      state.expandedDay = null;
+      saveProfiles();
+      render();
+      break;
+    case "open-add-profile":
+      state.showProfileModal = true;
+      state.editingProfileId = null;
+      state.profileDraftName = "";
+      state.profileDraftAvatar = PROFILE_AVATARS[0];
+      state.profileDraftAgeGroup = "child";
+      render();
+      break;
+    case "open-edit-profile": {
+      const p = state.profiles.find((pr) => pr.id === el.dataset.profileid);
+      if (!p) return;
+      state.showProfileModal = true;
+      state.editingProfileId = p.id;
+      state.profileDraftName = p.name;
+      state.profileDraftAvatar = p.avatar;
+      state.profileDraftAgeGroup = p.ageGroup;
+      render();
+      break;
+    }
+    case "close-profile-modal":
+      state.showProfileModal = false;
+      render();
+      break;
+    case "pick-profile-avatar":
+      state.profileDraftAvatar = el.dataset.avatar;
+      render();
+      break;
+    case "pick-profile-age":
+      state.profileDraftAgeGroup = el.dataset.age;
+      render();
+      break;
+    case "save-profile": {
+      const nameInput = document.getElementById("profile-name-input");
+      const name = (nameInput ? nameInput.value : state.profileDraftName).trim();
+      if (!name) return;
+      if (state.editingProfileId) {
+        const p = state.profiles.find((pr) => pr.id === state.editingProfileId);
+        if (p) {
+          p.name = name;
+          p.avatar = state.profileDraftAvatar;
+          p.ageGroup = state.profileDraftAgeGroup;
+        }
+      } else {
+        const newProfile = { id: `p${Date.now()}${Math.floor(Math.random() * 1000)}`, name, avatar: state.profileDraftAvatar, ageGroup: state.profileDraftAgeGroup };
+        state.profiles.push(newProfile);
+        state.activeProfileId = newProfile.id;
+      }
+      state.showProfileModal = false;
+      saveProfiles();
+      render();
+      break;
+    }
+    case "delete-profile": {
+      if (state.profiles.length <= 1) return;
+      if (!confirm("このプロフィールと記録・お気に入りをすべて削除しますか？")) return;
+      const id = state.editingProfileId;
+      state.profiles = state.profiles.filter((p) => p.id !== id);
+      state.records = state.records.filter((r) => r.profileId !== id);
+      state.favorites = state.favorites.filter((f) => f.profileId !== id);
+      if (state.activeProfileId === id) state.activeProfileId = state.profiles[0].id;
+      state.showProfileModal = false;
+      saveProfiles();
+      saveRecords();
+      saveFavorites();
+      render();
+      break;
+    }
+  }
+});
+
+document.addEventListener("input", (e) => {
+  if (e.target && e.target.id === "profile-name-input") {
+    state.profileDraftName = e.target.value;
   }
 });
 
