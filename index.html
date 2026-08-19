@@ -107,7 +107,7 @@
   html[data-fontsize="xlarge"] { font-size: 130%; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    font-family: "Hiragino Maru Gothic ProN", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
     background: var(--slate-100);
     color: var(--slate-800);
     -webkit-tap-highlight-color: transparent;
@@ -133,27 +133,38 @@
   .row-between { display: flex; align-items: center; justify-content: space-between; }
   .label-sm { font-size:0.8125rem; color: var(--slate-500); }
 
-  .badge { font-size:0.6875rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .badge { font-size:0.6875rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; transition: background-color 0.3s, color 0.3s; }
   .badge-safe { background: var(--emerald-bg); color: var(--emerald); }
   .badge-caution { background: var(--amber-bg); color: var(--amber); }
   .badge-danger { background: var(--red-bg); color: var(--red); }
 
   .info-btn { background: none; border: none; font-size:0.8125rem; padding: 0 0 0 2px; color: var(--slate-400); vertical-align: middle; }
 
-  .ph-row { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 14px; gap: 10px; }
-  .ph-value { font-size:2.75rem; font-weight: 800; margin: 0; font-variant-numeric: tabular-nums; line-height: 1; }
+  .ph-value { font-size:2.75rem; font-weight: 800; margin: 0 0 10px; font-variant-numeric: tabular-nums; line-height: 1; text-align: center; transition: color 0.3s; }
   .text-safe { color: var(--emerald); }
   .text-caution { color: var(--amber); }
   .text-danger { color: var(--red); }
 
-  .mascot { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 92px; flex-shrink: 0; }
-  .mascot-caption { font-size:0.625rem; color: var(--slate-500); text-align: center; line-height: 1.3; }
+  .mascot-hero-body { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0 6px; }
+  .mascot-hero-body svg { animation: mascot-float 3s ease-in-out infinite; }
+  .mascot-hero-caption { margin: 0; font-size:0.9375rem; font-weight: 700; color: var(--slate-800); text-align: center; line-height: 1.4; }
+  .detail-toggle { display: block; margin: 6px auto 0; background: none; border: none; font-size:0.75rem; font-weight: 700; color: var(--teal-dark); }
+  .ph-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--slate-100); }
+  @keyframes mascot-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
 
   .gauge-track { position: relative; height: 20px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
     background: linear-gradient(to right, #ef4444 0%, #f59e0b 38%, #22c55e 68%, #22c55e 100%); }
   .gauge-threshold { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.75); }
-  .gauge-marker { position: absolute; top: -4px; bottom: -4px; width: 6px; border-radius: 4px; background: var(--slate-900); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .gauge-marker { position: absolute; top: -4px; bottom: -4px; width: 6px; border-radius: 4px; background: var(--slate-900); box-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: left 0.5s ease; }
   .gauge-labels { display: flex; justify-content: space-between; font-size:0.6875rem; color: var(--slate-400); margin-top: 6px; padding: 0 2px; }
+
+  .checklist { display: flex; flex-direction: column; gap: 8px; }
+  .checklist-item { display: flex; align-items: center; gap: 10px; font-size:0.8125rem; color: var(--slate-400); }
+  .checklist-item.done { color: var(--slate-800); font-weight: 700; }
+  .checklist-icon { font-size:1.125rem; width: 1.5rem; text-align: center; flex-shrink: 0; }
 
   .explain-status { margin: 0 0 12px; font-size:0.875rem; font-weight: 700; color: var(--slate-800); line-height: 1.6; }
   .explain-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
@@ -454,10 +465,11 @@ function getPhExplanation(zone) {
   }
 }
 
-function renderMascotSvg(zoneKey) {
+function renderMascotSvg(zoneKey, size) {
+  const s = size || 56;
   if (zoneKey === "safe") {
     return `
-      <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+      <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
         <circle cx="50" cy="45" r="4" fill="#0f172a"/>
         <circle cx="70" cy="45" r="4" fill="#0f172a"/>
@@ -470,7 +482,7 @@ function renderMascotSvg(zoneKey) {
   }
   if (zoneKey === "caution") {
     return `
-      <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+      <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
         <path d="M60 15c-16 0-26 12-26 28 0 20 8 40 14 52 3 6 6 10 12 10s9-4 12-10c6-12 14-32 14-52 0-16-10-28-26-28z" fill="#fef9c3" stroke="#eab308" stroke-width="2"/>
         <circle cx="50" cy="45" r="4" fill="#0f172a"/>
         <circle cx="70" cy="45" r="4" fill="#0f172a"/>
@@ -480,7 +492,7 @@ function renderMascotSvg(zoneKey) {
     `;
   }
   return `
-    <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+    <svg viewBox="0 0 120 120" width="${s}" height="${s}" aria-hidden="true">
       <circle cx="60" cy="65" r="32" fill="#7c3aed"/>
       <circle cx="30" cy="42" r="8" fill="#7c3aed"/>
       <circle cx="90" cy="42" r="8" fill="#7c3aed"/>
@@ -1173,6 +1185,7 @@ const state = {
   showDailyFeedback: false,
   dailyFeedback: null,
   celebrate: null,
+  showPhDetail: false,
   now: Date.now(),
 };
 if (state.notifyEnabled && (typeof Notification === "undefined" || Notification.permission !== "granted")) {
@@ -1258,6 +1271,32 @@ function maybeFireBrowserNotification() {
   } catch (e) {}
 }
 
+/* 「今日できたこと」チェックリスト。時間帯ベースの簡易判定で、朝・昼・夜の歯磨きと間食の頻度を見る */
+const CHECKLIST_ITEMS = [
+  { id: "morning_brush", label: "朝の歯磨き", icon: "🌅", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) < 11 * 60) },
+  { id: "midday_brush",  label: "昼の歯磨き", icon: "☀️", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 11 * 60 && currentMinutesOfDay(r.time) < 17 * 60) },
+  { id: "night_brush",   label: "夜の仕上げ磨き", icon: "🌙", check: (records) => records.some((r) => r.type === "brush" && currentMinutesOfDay(r.time) >= 17 * 60) },
+  { id: "snack_limit",   label: "間食は2回まで", icon: "🍪", check: (records) => records.filter((r) => r.type === "food" && r.mealType === "snack").length <= 2 },
+];
+
+function renderTodayChecklist(records) {
+  const items = CHECKLIST_ITEMS.map((item) => {
+    const done = item.check(records);
+    return `
+      <div class="checklist-item ${done ? "done" : ""}">
+        <span class="checklist-icon" aria-hidden="true">${done ? "✅" : item.icon}</span>
+        <span class="checklist-label">${item.label}</span>
+      </div>
+    `;
+  }).join("");
+  return `
+    <div class="card">
+      <p class="label-sm" style="margin:0 0 10px;">今日できたこと</p>
+      <div class="checklist">${items}</div>
+    </div>
+  `;
+}
+
 function renderHome() {
   const records = todayRecords();
   const ph = calcPh(records, state.now);
@@ -1279,23 +1318,28 @@ function renderHome() {
 
   return `
     <div class="screen">
-      <div class="card">
+      <div class="card mascot-hero">
         <div class="row-between">
-          <span class="label-sm">現在の推定 口腔内pH<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
+          <span class="label-sm">今の様子<button class="info-btn" data-action="open-info" aria-label="脱灰・再石灰化について">ℹ️</button></span>
           <span class="badge badge-${zone.key}">${zone.label}</span>
         </div>
-        <div class="ph-row">
-          <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
-          <div class="mascot">
-            ${renderMascotSvg(zone.key)}
-            <div class="mascot-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</div>
+        <div class="mascot-hero-body">
+          ${renderMascotSvg(zone.key, 84)}
+          <p class="mascot-hero-caption">${mascotCaption(zone.key, activeProfile && activeProfile.mascotName)}</p>
+        </div>
+        <button class="detail-toggle" data-action="toggle-ph-detail" aria-expanded="${state.showPhDetail}">
+          ${state.showPhDetail ? "数値を閉じる ▲" : "くわしい数値を見る ▾"}
+        </button>
+        ${state.showPhDetail ? `
+          <div class="ph-detail">
+            <div class="ph-value text-${zone.key}">${ph.toFixed(2)}</div>
+            <div class="gauge-track" aria-hidden="true">
+              <div class="gauge-threshold" style="left:${dangerPct}%;"></div>
+              <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
+            </div>
+            <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
           </div>
-        </div>
-        <div class="gauge-track" aria-hidden="true">
-          <div class="gauge-threshold" style="left:${dangerPct}%;"></div>
-          <div class="gauge-marker" style="left:calc(${pct}% - 3px);"></div>
-        </div>
-        <div class="gauge-labels"><span>4.0 危険</span><span>5.5</span><span>7.0 中性</span></div>
+        ` : ""}
       </div>
 
       <div class="card">
@@ -1318,6 +1362,8 @@ function renderHome() {
         </div>
         <p style="margin:8px 0 0;font-size:0.75rem;color:var(--slate-500);">目安: 1日の合計が ${GOOD_DAY_MAX_DANGER_MIN}分以下になることを目指しましょう</p>
       </div>
+
+      ${renderTodayChecklist(records)}
 
       ${streak > 0 ? `
         <div class="card" style="display:flex;align-items:center;gap:10px;">
@@ -1579,7 +1625,8 @@ function renderCategoryStep() {
 
   const count = state.selectedCategories.length;
   const favKey = `${state.selectedMealType}|${state.selectedCategories.slice().sort().join(",")}`;
-  const alreadyFav = activeProfileFavorites().some((f) => f.key === favKey);
+  const myFavorites = activeProfileFavorites();
+  const alreadyFav = myFavorites.some((f) => f.key === favKey);
 
   return `
     <div class="modal-head">
@@ -1592,6 +1639,7 @@ function renderCategoryStep() {
     <button class="back-link" style="margin-top:14px;display:block;" data-action="save-favorite" ${count === 0 || alreadyFav ? "disabled" : ""}>
       ${alreadyFav ? "★ お気に入り登録済み" : "☆ この組み合わせをお気に入り登録"}
     </button>
+    ${myFavorites.length === 0 ? `<p class="hint" style="text-align:left;margin:6px 0 0;">💡 登録しておくと、次からホーム画面でワンタップで記録できます</p>` : ""}
     <button class="cta-btn" style="margin-top:10px;" data-action="confirm-record" ${count === 0 ? "disabled" : ""}>
       ${count === 0 ? "記録する" : `選んだ${count}件を記録する`}
     </button>
@@ -1992,6 +2040,10 @@ document.addEventListener("click", (e) => {
     case "toggle-reminder":
       state.reminderEnabled = !state.reminderEnabled;
       saveSettings();
+      render();
+      break;
+    case "toggle-ph-detail":
+      state.showPhDetail = !state.showPhDetail;
       render();
       break;
     case "toggle-notify": {
