@@ -223,7 +223,7 @@
   .record-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .record-list li { display: flex; align-items: center; justify-content: space-between; font-size:0.875rem; color: var(--slate-700); }
   .record-time { font-size:0.75rem; color: var(--slate-400); }
-  .record-delete { background: none; border: none; font-size:0.8125rem; padding: 2px 4px; color: var(--slate-400); }
+  .record-delete { background: none; border: none; padding: 2px 4px; display: flex; align-items: center; }
 
   .timeline-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--slate-100); }
   .timeline-item:last-child { border-bottom: none; }
@@ -241,7 +241,7 @@
   .help-item { border-bottom: 1px solid var(--slate-100); }
   .help-item:last-child { border-bottom: none; }
   .help-question { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 2px; background: none; border: none; text-align: left; }
-  .help-icon { font-size:1.125rem; flex-shrink: 0; }
+  .help-icon { flex-shrink: 0; display: flex; align-items: center; }
   .help-question-text { flex: 1; font-size:0.8125rem; font-weight: 700; color: var(--slate-800); line-height: 1.5; }
   .help-chevron { font-size:0.6875rem; color: var(--slate-400); flex-shrink: 0; }
   .help-item.open .help-question-text { color: var(--teal-dark); }
@@ -409,6 +409,18 @@ function recordLabelHtml(r) {
   return `<span style="display:flex;align-items:center;gap:8px;">${icon}<span>${text}</span></span>`;
 }
 
+/* 食事・歯磨き・ケアの件数サマリー（履歴の日別行、合計、ふりかえりモーダルで共用） */
+function countSummaryHtml(food, brush, protect, verbose) {
+  const sep = verbose ? " ／ " : "　";
+  const chip = (key, count, label) => `<span style="display:inline-flex;align-items:center;gap:3px;">${iconGlyph(key, 18)}${count}${label}</span>`;
+  const parts = [
+    chip("plate", food, verbose ? "件の食事記録" : "件"),
+    chip("toothbrush", brush, verbose ? "回の歯磨き" : "回"),
+  ];
+  if (protect) parts.push(chip("shield", protect, verbose ? "回のケア" : "回"));
+  return parts.join(sep);
+}
+
 /* 1日の理想的な食事・歯磨きサイクル（あくまで一般的な目安） */
 const SCHEDULE = [
   { start: 7 * 60,      icon: "ricebowl",   emoji: "🍚",  label: "朝食",               desc: "1日を規則正しく始めましょう",
@@ -435,7 +447,7 @@ const SCHEDULE = [
 const HELP_TOPICS = [
   {
     id: "stephan-curve",
-    icon: "📉",
+    icon: "trendgraph",
     question: "「ステファンカーブ」って何？",
     questionChild: "グラフのせんは なにをあらわしてるの？",
     answer: "食べ物や飲み物を口にすると、お口の中は一時的に酸性に傾き、その後だ液の働きで少しずつ中性に戻っていきます。この「酸性に傾いてから回復するまで」の変化を表したグラフを、提唱した学者の名前から「ステファンカーブ」と呼びます。このアプリは、記録した内容からこの変化を再現（シミュレーション）して表示しています。",
@@ -443,7 +455,7 @@ const HELP_TOPICS = [
   },
   {
     id: "ph",
-    icon: "🧪",
+    icon: "flask",
     question: "「pH」って何？",
     questionChild: "「ピーエイチ」ってなに？",
     answer: "pH（ピーエイチ）は、酸性・中性・アルカリ性の度合いを表す数値です。数字が小さいほど酸性が強く、7.0が中性です。お口の中のpHが下がりすぎる（酸性に傾きすぎる）と、歯の表面が溶けやすくなります。",
@@ -451,7 +463,7 @@ const HELP_TOPICS = [
   },
   {
     id: "zones",
-    icon: "🚦",
+    icon: "trafficlight",
     question: "「安全」「注意」「危険」の違いは？",
     questionChild: "みどり・きいろ・むらさきの ちがいは？",
     answer: "アプリでは口腔内pHの状態を3段階の目安に分けています。安全域（中性に近い）は歯が安定した状態、注意域はやや酸性に傾いてきた状態、危険域（pH5.5未満が目安）は歯の表面が溶け始めやすい状態です。あくまで一般的な目安であり、個人差があります。",
@@ -459,7 +471,7 @@ const HELP_TOPICS = [
   },
   {
     id: "demineral",
-    icon: "🔻",
+    icon: "cycle_arrows",
     question: "「脱灰（だっかい）」「再石灰化（さいせっかいか）」って何？",
     questionChild: "「はがとける」「はがなおる」ってどういうこと？",
     answer: "脱灰とは、口の中が酸性に傾いたときに歯の表面のミネラル（カルシウムなど）が溶け出すことです。再石灰化とは、だ液の力でそのミネラルが再び歯に戻り、表面が修復されることです。この2つが1日の中で繰り返されており、脱灰の時間が長すぎるとむし歯につながります。",
@@ -467,7 +479,7 @@ const HELP_TOPICS = [
   },
   {
     id: "why-simulation",
-    icon: "🔬",
+    icon: "magnifier",
     question: "なぜ「実測値」ではなく「シミュレーション」なの？",
     questionChild: "なんで きかいで はからないの？",
     answer: "実際の口腔内pHを正確に測るには専用の測定器が必要で、家庭で日常的に測るのは現実的ではありません。このアプリは、食事・歯磨きなどの記録内容から、一般的な研究知見（ステファンカーブ）に基づいてpHの変化を推定・可視化する教育用シミュレーションです。実際の値とは異なる場合があるため、むし歯や歯周病が気になる場合は歯科医院にご相談ください。",
@@ -475,7 +487,7 @@ const HELP_TOPICS = [
   },
   {
     id: "protect-actions",
-    icon: "🛡️",
+    icon: "shield",
     question: "フッ素・キシリトール・洗口液は何のため？",
     questionChild: "フッ素とか キシリトールって なにに つかうの？",
     answer: "これらは歯磨き以外で歯を酸から守る補助的なケアです。フッ素は歯の再石灰化を助けて酸への抵抗力を高め、キシリトールガムは唾液の分泌を促して酸を中和しやすくし、洗口液は口の中の酸や汚れを洗い流します。歯磨きの代わりではなく、あわせて行うことでより効果的です。",
@@ -483,7 +495,7 @@ const HELP_TOPICS = [
   },
   {
     id: "saliva",
-    icon: "💧",
+    icon: "water",
     question: "だ液（つば）にはどんな役割があるの？",
     questionChild: "つばには どんな はたらきが あるの？",
     answer: "だ液には、口の中の酸を中和して中性に戻す働きと、溶け出したミネラルを歯に戻す（再石灰化を助ける）働きがあります。だらだらと長時間食べ続けると、だ液が酸性を中和しきれず、脱灰の時間が長くなってしまいます。",
@@ -491,7 +503,7 @@ const HELP_TOPICS = [
   },
   {
     id: "snack-frequency",
-    icon: "🍪",
+    icon: "cookie",
     question: "おやつの回数と虫歯にはどんな関係があるの？",
     questionChild: "おやつを なんかいも たべると どうなるの？",
     answer: "食べる回数が多いほど、口の中が酸性になる時間の合計が長くなります。量よりも「回数」や「だらだら食べ」が虫歯リスクに大きく影響するため、間食は時間を決めてまとめて摂るのがおすすめです。",
@@ -499,7 +511,7 @@ const HELP_TOPICS = [
   },
   {
     id: "night-brush",
-    icon: "🌙",
+    icon: "moon",
     question: "寝る前の歯磨きが一番大事といわれるのはなぜ？",
     questionChild: "なんで ねるまえの はみがきが いちばん だいじなの？",
     answer: "就寝中はだ液の分泌量が大きく減るため、日中に比べて口の中が酸性から回復しにくく、脱灰が進みやすい時間帯です。寝る前に食べかすや汚れをしっかり落としておくことが、むし歯予防にとって特に重要とされています。",
@@ -661,6 +673,11 @@ const ICON_DEFS = {
   info:       { bg: "#64748b", glyph: `<circle cx="12" cy="12" r="8" fill="#fff"/><circle cx="12" cy="7.6" r="1.15" fill="#64748b"/><path d="M12 10.8v6" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/>` },
   warning:    { bg: "#d97706", glyph: `<path d="M12 3.5 21 19H3z" fill="#fff"/><path d="M12 9.5v4.5" stroke="#d97706" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.05" fill="#d97706"/>` },
   trash:      { bg: "#94a3b8", glyph: `<path d="M5 7h14M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4L17.5 7" fill="#fff"/><path d="M10 10.5v6M14 10.5v6" stroke="rgba(0,0,0,0.25)" stroke-width="1.2" stroke-linecap="round"/>` },
+  trendgraph: { bg: "#0ea5e9", glyph: `<path d="M4 7l5 4 3-2 8 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="4" cy="7" r="1.3" fill="#fff"/><circle cx="20" cy="16" r="1.3" fill="#fff"/>` },
+  flask:      { bg: "#0d9488", glyph: `<path d="M10 3h4v5.5l4.5 8a2 2 0 0 1-1.8 3H7.3a2 2 0 0 1-1.8-3l4.5-8z" fill="#fff"/><path d="M9 14h6" stroke="rgba(0,0,0,0.22)" stroke-width="1.2"/><path d="M9.5 3h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>` },
+  trafficlight:{ bg: "#475569", glyph: `<rect x="8" y="3" width="8" height="18" rx="3" fill="#fff"/><circle cx="12" cy="7" r="1.6" fill="#ef4444"/><circle cx="12" cy="12" r="1.6" fill="#f59e0b"/><circle cx="12" cy="17" r="1.6" fill="#22c55e"/>` },
+  cycle_arrows:{ bg: "#f97316", glyph: `<path d="M5 12a7 7 0 0 1 12-4.9M19 5v4h-4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M19 12a7 7 0 0 1-12 4.9M5 19v-4h4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+  magnifier:  { bg: "#64748b", glyph: `<circle cx="10.5" cy="10.5" r="6" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M15 15l5 5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>` },
 };
 
 /* iconKeyに対応する色付きチップ＋白いシルエットのSVGアイコンを返す */
@@ -1251,7 +1268,7 @@ function renderHistoryScreen() {
       <div class="day-detail">
         <ul class="record-list">
           ${dayRecords.map((r) => {
-            return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+            return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">${iconGlyph("trash", 22)}</button></span></li>`;
           }).join("")}
         </ul>
       </div>
@@ -1262,7 +1279,7 @@ function renderHistoryScreen() {
       <button class="day-row" data-action="toggle-day" data-daykey="${key}" aria-expanded="${expanded}">
         <span class="day-dot" style="background:${zoneDotColor(zone.key)};" aria-hidden="true"></span>
         <span class="day-date">${parseInt(m, 10)}/${parseInt(d, 10)}(${weekday})</span>
-        <span class="day-counts">🍽️ ${foodCount}件　🪥 ${brushCount}回${protectCount ? `　🧪 ${protectCount}回` : ""}</span>
+        <span class="day-counts">${countSummaryHtml(foodCount, brushCount, protectCount, false)}</span>
         <span class="day-expand-icon" aria-hidden="true">${expanded ? "▲" : "▼"}</span>
       </button>
       ${detail}
@@ -1292,7 +1309,7 @@ function renderHistoryScreen() {
 
       <div class="card history-summary">
         記録開始日: ${firstDate}<br />
-        合計 🍽️ ${totalFood}件の食事記録 ／ 🪥 ${totalBrush}回の歯磨き${totalProtect ? ` ／ 🧪 ${totalProtect}回のケア` : ""}
+        合計 ${countSummaryHtml(totalFood, totalBrush, totalProtect, true)}
       </div>
 
       <div class="card">${rows}</div>
@@ -1708,7 +1725,7 @@ function renderGraph() {
   const records = todayRecords();
   const advice = generateAdvice(records, state.now);
   const listItems = records.map((r) => {
-    return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">🗑</button></span></li>`;
+    return `<li>${recordLabelHtml(r)}<span style="display:flex;align-items:center;gap:8px;"><span class="record-time">${formatClock(r.time)}</span><button class="record-delete" data-action="delete-record" data-id="${r.id}" aria-label="この記録を削除">${iconGlyph("trash", 22)}</button></span></li>`;
   }).join("");
 
   return `
@@ -1856,7 +1873,7 @@ function renderHelpScreen() {
     return `
       <div class="help-item ${open ? "open" : ""}">
         <button class="help-question" data-action="toggle-help-topic" data-topicid="${t.id}" aria-expanded="${open}">
-          <span class="help-icon" aria-hidden="true">${t.icon}</span>
+          <span class="help-icon" aria-hidden="true">${iconGlyph(t.icon, 28)}</span>
           <span class="help-question-text">${question}</span>
           <span class="help-chevron" aria-hidden="true">${open ? "▲" : "▾"}</span>
         </button>
@@ -2156,7 +2173,7 @@ function renderDailyFeedbackModal() {
             </div>
           </div>
           <p style="margin:0;font-size:0.8125rem;color:var(--slate-600);line-height:1.6;">
-            🍽️ ${f.foodCount}件の食事記録 ／ 🪥 ${f.brushCount}回の歯磨き${f.protectCount ? ` ／ 🧪 ${f.protectCount}回のケア` : ""}
+            ${countSummaryHtml(f.foodCount, f.brushCount, f.protectCount, true)}
           </p>
         </div>
         <button class="cta-btn" style="margin-top:16px;" data-action="close-daily-feedback">今日もはじめる</button>
