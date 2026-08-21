@@ -339,15 +339,25 @@
 <script>
 /* ------------------------------------------------------------------ *
  * 食品カテゴリと「ステファンカーブ」簡易モデルのパラメータ
- * drop      : 摂取直後に下がるpHの量
- * halfLife  : そこからベースラインへ回復していく半減期（分）
+ * drop      : 摂取後に下がるpHの最大量
+ * halfLife  : ピーク後にベースラインへ回復していく半減期（分）
  *             値が大きいほど、ダラダラと長く低pH状態が続く
+ *
+ * 半減期の目安は、液状・酸性で口腔内から素早く洗い流される食品
+ * （柑橘・酢・炭酸飲料・果汁など）を短め、粘着性が高くだ液や歯の
+ * 表面に長くとどまる食品（チョコレート・キャンディ・ケーキなど）を
+ * 長めに設定している。これは臨床研究で報告されている対比
+ * ―― 例えばオレンジジュースは「急激に下がり素早く戻る」のに対し、
+ * チョコレートは「緩やかに下がり緩やかに戻る」―― に基づく大まかな
+ * 近似であり、個々の食品ごとに実測された値ではない点に注意。
+ * （参考: Stephan 1944; Igarashi et al., J Dent Res 1981;
+ *   dentalcare.com CE713 "Stephan Curve"）
  * ------------------------------------------------------------------ */
 const CATEGORY_DEFS = {
   sweet:            { label: "甘い・酸っぱいもの",     emoji: "🍬", icon: "candy",    drop: 1.6, halfLife: 20, desc: "お菓子・ジュース・果物など" },
   sweet_strong:     { label: "甘いもの（強）",         emoji: "🍫", icon: "chocolate", drop: 1.8, halfLife: 20, desc: "チョコ・キャンディ・ジュースなど" },
   sweet_weak:       { label: "甘いもの（弱）",         emoji: "🍪", icon: "cookie",   drop: 1.0, halfLife: 15, desc: "クッキー・菓子パンなど" },
-  sour:             { label: "酸っぱいもの",           emoji: "🍋", icon: "citrus",   drop: 2.0, halfLife: 25, desc: "柑橘・酢・炭酸飲料など" },
+  sour:             { label: "酸っぱいもの",           emoji: "🍋", icon: "citrus",   drop: 2.0, halfLife: 18, desc: "柑橘・酢・炭酸飲料など" },
   carb:             { label: "炭水化物",               emoji: "🍚", icon: "ricebowl", drop: 1.2, halfLife: 15, desc: "ご飯・パン・麺など" },
   water:            { label: "水・お茶",               emoji: "💧", icon: "water",    drop: 0,   halfLife: 1,  desc: "糖分・酸を含まない飲み物" },
   meal:             { label: "その他の食事",           emoji: "🍽️", icon: "plate",    drop: 0.8, halfLife: 10, desc: "バランスの良い食事など" },
@@ -361,8 +371,8 @@ const CATEGORY_DEFS = {
   candy:            { label: "キャンディ・グミ",       emoji: "🍬", icon: "candy",    drop: 1.9, halfLife: 26, desc: "溶けるまで長く口にとどまる" },
   juice:            { label: "ジュース",               emoji: "🧃", icon: "juicebox", drop: 1.6, halfLife: 16, desc: "果汁飲料・加糖飲料など" },
   soda:             { label: "炭酸飲料",               emoji: "🥤", icon: "sodacup",  drop: 2.0, halfLife: 18, desc: "コーラ・サイダーなど" },
-  citrus:           { label: "柑橘類",                 emoji: "🍋", icon: "citrus",   drop: 1.9, halfLife: 22, desc: "みかん・レモン・グレープフルーツなど" },
-  vinegar:          { label: "酢の物・ドレッシング",   emoji: "🍶", icon: "vinegar",  drop: 1.7, halfLife: 20, desc: "酢の物・ピクルスなど" },
+  citrus:           { label: "柑橘類",                 emoji: "🍋", icon: "citrus",   drop: 1.9, halfLife: 18, desc: "みかん・レモン・グレープフルーツなど" },
+  vinegar:          { label: "酢の物・ドレッシング",   emoji: "🍶", icon: "vinegar",  drop: 1.7, halfLife: 17, desc: "酢の物・ピクルスなど" },
   snack:            { label: "スナック・揚げ物",       emoji: "🍟", icon: "fries",    drop: 1.1, halfLife: 16, desc: "ポテトチップス・揚げ物系おつまみなど" },
 
   cake:             { label: "ケーキ・洋菓子",         emoji: "🍰", icon: "cake",     drop: 1.7, halfLife: 20, desc: "誕生日ケーキ・シュークリームなど" },
@@ -548,11 +558,35 @@ const HELP_TOPICS = [
 const BASELINE = 7.0;
 const PH_MIN = 4.0;
 const PH_MAX = 7.5;
+/* エナメル質の脱灰が始まるとされる臨界pH（Featherstone et al. をはじめ広く引用される値） */
 const DANGER_PH = 5.5;
-const SAFE_PH = 6.3;
+/* 象牙質（歯肉退縮などで露出した歯根面）の脱灰臨界pHは6.2〜6.4程度とエナメル質より高いとされる。
+   その範囲の下限を「注意域」の目安として採用し、根面が露出しやすい層（矯正治療中の人など）
+   にとっても早めに注意喚起できるようにしている */
+const SAFE_PH = 6.2;
 /* 歯磨き・うがいを記録すると、それより前の食品由来の酸の影響をこの割合だけ即座に減らす
    （食べかす除去・洗口・フッ素による効果の簡易モデル） */
 const BRUSH_REDUCTION = 0.65;
+/* ステファンカーブは摂取直後に瞬時に最下点へ落ちるのではなく、酸の生成が進むにつれて
+   数分〜十数分かけて最下点（ピーク）に達し、そこからだ液の働きで回復していく
+   （文献では最下点到達までおおむね5〜20分程度と報告される）。
+   このアプリでは「酸の生成（立ち上がり）」と「だ液による回復」の2つの指数過程を
+   組み合わせた単純なモデルでこの形を再現する。ONSET_RATE_RATIOは回復の速さ（1/halfLife）
+   に対する立ち上がりの速さの倍率で、halfLifeが長い（＝回復が遅い＝口の中に長くとどまる）
+   食品ほど最下点への到達も遅くなるようにしている。これは臨床研究で報告される対比
+   （例: 柑橘系飲料は急落・急回復、チョコレートは緩落・緩回復）と整合する。 */
+const ONSET_RATE_RATIO = 6;
+
+/* 1品の食品による、摂取からelapsedMin分後のpH低下量（0以上、cat.dropを超えない） */
+function foodPhContribution(cat, elapsedMin) {
+  if (elapsedMin <= 0) return 0;
+  const k2 = Math.log(2) / cat.halfLife; // 回復（だ液による中和）の速度定数
+  const k1 = ONSET_RATE_RATIO * k2;      // 酸の生成（立ち上がり）の速度定数
+  const tPeak = Math.log(k1 / k2) / (k1 - k2);
+  const peakShape = Math.exp(-k2 * tPeak) - Math.exp(-k1 * tPeak);
+  const shape = Math.exp(-k2 * elapsedMin) - Math.exp(-k1 * elapsedMin);
+  return cat.drop * (shape / peakShape);
+}
 /* 歯磨き記録の連打防止：一定時間は再記録できないようにする */
 const BRUSH_COOLDOWN_MIN = 30;
 /* 1日の危険域滞在時間がこれ以下なら「良い日」とみなす目安（分） */
@@ -579,8 +613,7 @@ function calcPh(records, atTime) {
     const cat = CATEGORY_DEFS[r.category];
     if (!cat || cat.drop === 0) continue;
     const elapsedMin = (atTime - r.time) / 60000;
-    const k = Math.log(2) / cat.halfLife;
-    let contribution = cat.drop * Math.exp(-k * elapsedMin);
+    let contribution = foodPhContribution(cat, elapsedMin);
     for (const ev of reductionEvents) {
       if (ev.time > r.time) contribution *= (1 - ev.factor);
     }
