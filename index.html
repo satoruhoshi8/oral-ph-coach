@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Oral pH Coach（プロトタイプ）</title>
+<title>Oral pH Coach</title>
 <meta name="theme-color" content="#0d9488" />
 <meta name="color-scheme" content="light dark" />
 <link rel="manifest" href="manifest.json" />
@@ -854,7 +854,7 @@ function mascotCaption(zoneKey, mascotName) {
   const pool = isChild ? MASCOT_MESSAGES_CHILD : MASCOT_MESSAGES_ADULT;
   const variants = pool[zoneKey] || pool.safe;
   const idx = Math.floor(state.now / (30 * 60000)) % variants.length;
-  return `${name}${variants[idx]}`;
+  return `${escapeHtml(name)}${variants[idx]}`;
 }
 
 function formatClock(ts) {
@@ -1360,7 +1360,9 @@ function loadRecords() {
 function saveRecords() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.records));
-  } catch (e) {}
+  } catch (e) {
+    state.storageWarning = true;
+  }
 }
 
 function loadSettings() {
@@ -1383,7 +1385,9 @@ function saveSettings() {
       reminderTime: state.reminderTime,
       notifyEnabled: state.notifyEnabled,
     }));
-  } catch (e) {}
+  } catch (e) {
+    state.storageWarning = true;
+  }
 }
 
 function isFirstLaunch() {
@@ -1407,7 +1411,9 @@ function loadFavorites() {
 function saveFavorites() {
   try {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
-  } catch (e) {}
+  } catch (e) {
+    state.storageWarning = true;
+  }
 }
 
 const DEFAULT_PROFILE = { id: "default", name: "わたし", avatar: "⭐", ageGroup: "adult", mascotName: "" };
@@ -1429,7 +1435,9 @@ function loadProfiles() {
 function saveProfiles() {
   try {
     localStorage.setItem(PROFILES_KEY, JSON.stringify({ profiles: state.profiles, activeProfileId: state.activeProfileId }));
-  } catch (e) {}
+  } catch (e) {
+    state.storageWarning = true;
+  }
 }
 
 /* 複数プロフィール導入前に作られた記録・お気に入りをデフォルトプロフィールに割り当てる */
@@ -1501,6 +1509,8 @@ const state = {
   showMoreMenu: false,
   showProtectModal: false,
   showProfileModal: false,
+  confirmDialog: null,
+  storageWarning: false,
   editingProfileId: null,
   profileDraftName: "",
   profileDraftAvatar: PROFILE_AVATARS[0],
@@ -1600,16 +1610,20 @@ function todayDangerMinutes() {
   return computeZoneMinutes(records, dayStartTs(state.now), state.now, 2).dangerMin;
 }
 
-/* 設定した目安時間を過ぎても仕上げ磨きの記録がなければリマインドを出す（過ぎてから3時間だけ表示） */
+/* 設定した目安時間を過ぎても仕上げ磨きの記録がなければリマインドを出す（過ぎてから3時間だけ表示）
+   時刻同士ではなく絶対時刻（エポックms）で比較することで、21時以降に設定した場合の日付またぎでも
+   正しく3時間の表示ウィンドウを維持する */
 function shouldShowBrushReminder() {
   if (!state.reminderEnabled) return false;
   const [h, m] = (state.reminderTime || "20:00").split(":").map(Number);
-  const reminderMinutes = h * 60 + m;
-  const nowMinutes = currentMinutesOfDay(state.now);
-  if (nowMinutes < reminderMinutes || nowMinutes > reminderMinutes + 180) return false;
-  const brushedAfterReminder = todayRecords().some((r) => {
-    if (r.type !== "brush") return false;
-    return currentMinutesOfDay(r.time) >= reminderMinutes;
+  const reminderMinutesOfDay = h * 60 + m;
+  const todayStart = dayStartTs(state.now);
+  let triggerTs = todayStart + reminderMinutesOfDay * 60000;
+  if (triggerTs > state.now) triggerTs -= 24 * 60 * 60000;
+  const elapsedMs = state.now - triggerTs;
+  if (elapsedMs < 0 || elapsedMs > 180 * 60000) return false;
+  const brushedAfterReminder = state.records.some((r) => {
+    return r.profileId === state.activeProfileId && r.type === "brush" && r.time >= triggerTs && r.time <= state.now;
   });
   return !brushedAfterReminder;
 }
@@ -1755,7 +1769,7 @@ function renderHomeInfoModal() {
   const isChild = activeAgeGroup() === "child";
   return `
     <div class="modal-overlay" data-action="close-home-info">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>${isChild ? "いまのようす、くわしく" : "今の様子、くわしく"}</h2>
           <button class="modal-close" data-action="close-home-info" aria-label="閉じる">×</button>
@@ -1978,6 +1992,16 @@ function renderSettingsScreen() {
         <p class="label-sm" style="margin:0 0 10px;">文字の大きさ</p>
         ${renderFontSizeOptions()}
       </div>
+      <div class="card">
+        <p class="label-sm" style="margin:0 0 4px;">データのバックアップ</p>
+        <p style="margin:0 0 14px;font-size:0.75rem;color:var(--slate-500);line-height:1.6;">
+          記録・プロフィール・設定はこの端末にだけ保存されています。機種変更やブラウザのデータ削除に備えて、ときどきファイルに書き出しておくことをおすすめします。
+        </p>
+        <div class="btn-stack">
+          <button class="secondary-btn" data-action="export-data">⬇️ バックアップを書き出す</button>
+          <button class="secondary-btn" data-action="import-data">⬆️ バックアップを読み込む</button>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -2041,7 +2065,7 @@ function renderModal() {
   const body = state.modalStep === "category" ? renderCategoryStep() : renderMealTypeStep();
   return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet">${body}</div>
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">${body}</div>
     </div>
   `;
 }
@@ -2062,7 +2086,7 @@ function renderProtectModal() {
   const count = state.selectedProtects.length;
   return `
     <div class="modal-overlay" data-action="close-protect-modal">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>歯を守るケアを記録</h2>
           <button class="modal-close" data-action="close-protect-modal" aria-label="閉じる">×</button>
@@ -2100,7 +2124,7 @@ function renderProfileSwitcherModal() {
   `).join("");
   return `
     <div class="modal-overlay" data-action="close-profile-switcher">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>プロフィールを切り替え</h2>
           <button class="modal-close" data-action="close-profile-switcher" aria-label="閉じる">×</button>
@@ -2134,7 +2158,7 @@ function renderMoreMenu() {
   `).join("");
   return `
     <div class="modal-overlay" data-action="close-more-menu">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>その他のメニュー</h2>
           <button class="modal-close" data-action="close-more-menu" aria-label="閉じる">×</button>
@@ -2156,7 +2180,7 @@ function renderProfileModal() {
   `).join("");
   return `
     <div class="modal-overlay" data-action="close-profile-modal">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>${isEditing ? "プロフィールを編集" : "プロフィールを追加"}</h2>
           <button class="modal-close" data-action="close-profile-modal" aria-label="閉じる">×</button>
@@ -2184,10 +2208,10 @@ function renderDailyFeedbackModal() {
   const f = state.dailyFeedback;
   const dateLabel = `${f.date.getMonth() + 1}月${f.date.getDate()}日`;
   const profile = state.profiles.find((p) => p.id === state.activeProfileId);
-  const titlePrefix = state.profiles.length > 1 && profile ? `${profile.name}の` : "";
+  const titlePrefix = state.profiles.length > 1 && profile ? `${escapeHtml(profile.name)}の` : "";
   return `
     <div class="modal-overlay" data-action="close-daily-feedback">
-      <div class="modal-sheet">
+      <div class="modal-sheet" role="dialog" aria-modal="true" tabindex="-1">
         <div class="modal-head">
           <h2>${titlePrefix}${dateLabel}のふりかえり</h2>
           <button class="modal-close" data-action="close-daily-feedback" aria-label="閉じる">×</button>
@@ -2214,6 +2238,82 @@ function renderDailyFeedbackModal() {
   `;
 }
 
+/* 削除・上書きなど取り消せない操作の確認モーダル。ブラウザ標準のconfirm()の代わりに
+   アプリのデザインに合わせたスタイルで表示する */
+function renderConfirmModal() {
+  if (!state.confirmDialog) return "";
+  const c = state.confirmDialog;
+  return `
+    <div class="modal-overlay" data-action="cancel-confirm">
+      <div class="modal-sheet" role="alertdialog" aria-modal="true" tabindex="-1">
+        <div class="modal-head">
+          <h2>確認</h2>
+          <button class="modal-close" data-action="cancel-confirm" aria-label="キャンセル">×</button>
+        </div>
+        <p style="margin:0 0 18px;font-size:0.875rem;color:var(--slate-700);line-height:1.7;">${escapeHtml(c.message)}</p>
+        <div class="btn-stack">
+          <button class="cta-btn" style="background:var(--red);box-shadow:none;" data-action="confirm-yes">${escapeHtml(c.confirmLabel || "実行する")}</button>
+          <button class="secondary-btn" data-action="cancel-confirm">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ------------------------------------------------------------------ *
+ * データのバックアップ（書き出し／読み込み）
+ * ------------------------------------------------------------------ */
+function exportData() {
+  const payload = {
+    app: "oral-ph-coach",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    records: state.records,
+    favorites: state.favorites,
+    profiles: state.profiles,
+    activeProfileId: state.activeProfileId,
+    settings: {
+      detailLevel: state.detailLevel,
+      themePref: state.themePref,
+      fontSizePref: state.fontSizePref,
+      reminderEnabled: state.reminderEnabled,
+      reminderTime: state.reminderTime,
+    },
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `oral-ph-coach-backup-${dayKey(new Date())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function importDataFromFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(String(reader.result));
+      if (!data || typeof data !== "object" || !Array.isArray(data.records) || !Array.isArray(data.profiles) || data.profiles.length === 0) {
+        throw new Error("invalid backup file");
+      }
+      state.confirmDialog = {
+        type: "import-data",
+        payload: data,
+        message: "バックアップを読み込むと、この端末の今の記録・プロフィールに上書きされます。続けますか？",
+        confirmLabel: "読み込む",
+      };
+      render();
+      focusModalSheet();
+    } catch (e) {
+      alert("読み込みに失敗しました。書き出したバックアップファイルを選択してください。");
+    }
+  };
+  reader.readAsText(file);
+}
+
 function render() {
   const root = document.getElementById("root");
   if (state.showOnboarding) {
@@ -2224,6 +2324,14 @@ function render() {
   root.innerHTML = `
     ${state.celebrate ? `<div class="celebrate-toast">${state.celebrate.emoji} ${escapeHtml(state.celebrate.text)}</div>` : ""}
     <div class="app">
+      ${state.storageWarning ? `
+        <div class="install-banner" style="background:var(--red);">
+          <span>⚠️ 記録の保存に失敗している可能性があります（端末のストレージ容量をご確認ください）</span>
+          <div class="install-banner-actions">
+            <button data-action="dismiss-storage-warning" aria-label="閉じる">×</button>
+          </div>
+        </div>
+      ` : ""}
       ${state.showInstallBanner ? `
         <div class="install-banner">
           <span>📲 ホーム画面に追加すると、アプリのように使えます</span>
@@ -2257,16 +2365,75 @@ function render() {
     ${renderMoreMenu()}
     ${renderHomeInfoModal()}
     ${renderDailyFeedbackModal()}
+    ${renderConfirmModal()}
   `;
 }
+
+/* ------------------------------------------------------------------ *
+ * モーダルのキーボード操作（フォーカストラップ・Escapeで閉じる）
+ * ------------------------------------------------------------------ */
+function isAnyModalOpen() {
+  return !!(state.showModal || state.showProtectModal || state.showProfileModal || state.showProfileSwitcher || state.showMoreMenu || state.showHomeInfo || state.showDailyFeedback || state.confirmDialog);
+}
+
+function topModalSheet() {
+  const overlays = document.querySelectorAll(".modal-overlay");
+  if (overlays.length === 0) return null;
+  return overlays[overlays.length - 1].querySelector(".modal-sheet");
+}
+
+function focusModalSheet() {
+  requestAnimationFrame(() => {
+    const sheet = topModalSheet();
+    if (sheet) sheet.focus();
+  });
+}
+
+function getFocusableEls(container) {
+  return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(
+    (el) => !el.disabled && el.offsetParent !== null
+  );
+}
+
+function closeTopModal() {
+  if (state.confirmDialog) { state.confirmDialog = null; render(); return true; }
+  if (state.showDailyFeedback) { state.showDailyFeedback = false; saveFeedbackSeen(dayKey(new Date(state.now))); render(); return true; }
+  if (state.showHomeInfo) { state.showHomeInfo = false; render(); return true; }
+  if (state.showMoreMenu) { state.showMoreMenu = false; render(); return true; }
+  if (state.showProfileSwitcher) { state.showProfileSwitcher = false; render(); return true; }
+  if (state.showProfileModal) { state.showProfileModal = false; render(); return true; }
+  if (state.showProtectModal) { state.showProtectModal = false; state.selectedProtects = []; render(); return true; }
+  if (state.showModal) { state.showModal = false; state.modalStep = "mealtype"; state.selectedMealType = null; state.selectedCategories = []; render(); return true; }
+  return false;
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") {
+    const sheet = topModalSheet();
+    if (!sheet) return;
+    const focusables = getFocusableEls(sheet);
+    if (focusables.length === 0) { e.preventDefault(); return; }
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+    return;
+  }
+  if (e.key === "Escape") closeTopModal();
+});
 
 document.addEventListener("click", (e) => {
   const el = e.target.closest("[data-action]");
   if (!el) return;
   const action = el.dataset.action;
 
-  if ((action === "close-modal" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal" || action === "close-profile-switcher" || action === "close-more-menu" || action === "close-home-info") && e.target !== el) return;
+  if ((action === "close-modal" || action === "close-protect-modal" || action === "close-daily-feedback" || action === "close-profile-modal" || action === "close-profile-switcher" || action === "close-more-menu" || action === "close-home-info" || action === "cancel-confirm") && e.target !== el) return;
 
+  const wasModalOpen = isAnyModalOpen();
   switch (action) {
     case "close-daily-feedback":
       state.showDailyFeedback = false;
@@ -2372,14 +2539,10 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
-    case "delete-record": {
-      if (!confirm("この記録を削除しますか？")) return;
-      const id = el.dataset.id;
-      state.records = state.records.filter((r) => String(r.id) !== id);
-      saveRecords();
+    case "delete-record":
+      state.confirmDialog = { type: "delete-record", id: el.dataset.id, message: "この記録を削除しますか？", confirmLabel: "削除する" };
       render();
       break;
-    }
     case "toggle-day":
       state.expandedDay = state.expandedDay === el.dataset.daykey ? null : el.dataset.daykey;
       render();
@@ -2600,22 +2763,75 @@ document.addEventListener("click", (e) => {
       render();
       break;
     }
-    case "delete-profile": {
+    case "delete-profile":
       if (state.profiles.length <= 1) return;
-      if (!confirm("このプロフィールと記録・お気に入りをすべて削除しますか？")) return;
-      const id = state.editingProfileId;
-      state.profiles = state.profiles.filter((p) => p.id !== id);
-      state.records = state.records.filter((r) => r.profileId !== id);
-      state.favorites = state.favorites.filter((f) => f.profileId !== id);
-      if (state.activeProfileId === id) state.activeProfileId = state.profiles[0].id;
-      state.showProfileModal = false;
-      saveProfiles();
-      saveRecords();
-      saveFavorites();
+      state.confirmDialog = { type: "delete-profile", id: state.editingProfileId, message: "このプロフィールと記録・お気に入りをすべて削除しますか？", confirmLabel: "削除する" };
+      render();
+      break;
+    case "cancel-confirm":
+      state.confirmDialog = null;
+      render();
+      break;
+    case "confirm-yes": {
+      const c = state.confirmDialog;
+      state.confirmDialog = null;
+      if (!c) { render(); break; }
+      if (c.type === "delete-record") {
+        state.records = state.records.filter((r) => String(r.id) !== c.id);
+        saveRecords();
+      } else if (c.type === "delete-profile") {
+        const id = c.id;
+        state.profiles = state.profiles.filter((p) => p.id !== id);
+        state.records = state.records.filter((r) => r.profileId !== id);
+        state.favorites = state.favorites.filter((f) => f.profileId !== id);
+        if (state.activeProfileId === id) state.activeProfileId = state.profiles[0].id;
+        state.showProfileModal = false;
+        saveProfiles();
+        saveRecords();
+        saveFavorites();
+      } else if (c.type === "import-data") {
+        const data = c.payload;
+        state.records = data.records;
+        state.favorites = Array.isArray(data.favorites) ? data.favorites : [];
+        state.profiles = data.profiles.length ? data.profiles : [DEFAULT_PROFILE];
+        state.activeProfileId = data.activeProfileId && state.profiles.some((p) => p.id === data.activeProfileId) ? data.activeProfileId : state.profiles[0].id;
+        if (data.settings && typeof data.settings === "object") {
+          state.detailLevel = data.settings.detailLevel || DEFAULT_DETAIL_LEVEL;
+          state.themePref = data.settings.themePref || "auto";
+          state.fontSizePref = data.settings.fontSizePref || "standard";
+          state.reminderEnabled = data.settings.reminderEnabled !== false;
+          state.reminderTime = data.settings.reminderTime || "20:00";
+        }
+        state.notifyEnabled = false;
+        saveRecords();
+        saveFavorites();
+        saveProfiles();
+        saveSettings();
+        applyTheme();
+        triggerCelebration("📥", "読み込みました！");
+      }
       render();
       break;
     }
+    case "dismiss-storage-warning":
+      state.storageWarning = false;
+      render();
+      break;
+    case "export-data":
+      exportData();
+      break;
+    case "import-data": {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.addEventListener("change", () => {
+        if (input.files && input.files[0]) importDataFromFile(input.files[0]);
+      });
+      input.click();
+      break;
+    }
   }
+  if (!wasModalOpen && isAnyModalOpen()) focusModalSheet();
 });
 
 document.addEventListener("input", (e) => {
@@ -2634,10 +2850,17 @@ document.addEventListener("input", (e) => {
 setInterval(() => {
   state.now = Date.now();
   maybeFireBrowserNotification();
+  /* 入力中に全画面再描画するとフォーカス（テキストカーソル）が飛んでしまうため、
+     テキスト入力中はこのタイマー起点の再描画をスキップする。次にクリック操作が
+     起きたタイミングで通常どおり再描画され、state.nowも反映される */
+  const active = document.activeElement;
+  const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+  if (isTyping) return;
   render();
 }, 5000);
 
 render();
+if (isAnyModalOpen()) focusModalSheet();
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();

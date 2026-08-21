@@ -1,6 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <rect width="128" height="128" rx="28" fill="#0d9488" />
-  <circle cx="64" cy="54" r="30" fill="#ffffff" />
-  <text x="64" y="64" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="800" fill="#0d9488" text-anchor="middle">pH</text>
-  <path d="M36 94 Q64 118 92 94" stroke="#ffffff" stroke-width="8" fill="none" stroke-linecap="round" />
+  <g transform="translate(64,64) scale(0.85) translate(-60,-57)">
+    <path d="M34,28 Q38,14 60,14 Q82,14 86,28 Q92,40 88,54 Q86,66 78,74 Q80,86 72,96 Q68,100 64,92 Q62,86 60,78 Q58,86 56,92 Q52,100 48,96 Q40,86 42,74 Q34,66 32,54 Q28,40 34,28 Z" fill="#ffffff" />
+    <circle cx="48" cy="44" r="5.2" fill="#0d9488" />
+    <circle cx="72" cy="44" r="5.2" fill="#0d9488" />
+    <path d="M46 55 Q60 66 74 55" stroke="#0d9488" stroke-width="3.4" fill="none" stroke-linecap="round" />
+  </g>
 </svg>
